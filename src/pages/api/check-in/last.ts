@@ -1,4 +1,5 @@
-import { getSession } from "next-auth/react";
+import { getServerSession } from "next-auth/next";
+import { authOptions } from "../auth/[...nextauth]";
 import type { NextApiRequest, NextApiResponse } from "next";
 import { prisma } from '../../../lib/prisma';
 
@@ -8,7 +9,7 @@ export default async function handler(
 ) {
   try {
     console.log("Starting last check-in API request");
-    const session = await getSession({ req });
+    const session = await getServerSession(req, res, authOptions);
     console.log("Session:", session);
 
     if (!session) {

@@ -1,4 +1,5 @@
-import { getSession } from "next-auth/react";
+import { getServerSession } from "next-auth/next";
+import { authOptions } from "../auth/[...nextauth]";
 import type { NextApiRequest, NextApiResponse } from "next";
 import { prisma } from '../../../lib/prisma';
 
@@ -7,13 +8,17 @@ export default async function handler(
   res: NextApiResponse
 ) {
   try {
-    const session = await getSession({ req });
+    console.log("Check-in API: Request headers:", req.headers);
+    const session = await getServerSession(req, res, authOptions);
+    console.log("Check-in API: Session:", session);
 
     if (!session) {
+      console.log("Check-in API: No session found");
       return res.status(401).json({ error: "Unauthorized" });
     }
 
     if (req.method === "POST") {
+      console.log("Check-in API: Processing POST request for user:", session.user?.email);
       const user = await prisma.user.findUnique({
         where: { email: session.user?.email! },
       });
