@@ -1,0 +1,27 @@
+<goal>
+Create a functional webpage and backend services for a new app called stillokay.
+</goal>
+
+<core-functionality>
+We want to make a webpage for people who live alone and worry what would happen if they suddently became incapacitated. To get started, they identify a caregiver by name and phone number. The app presents a big "still okay" button and instructs the user to click it once a day.  The service checks at midnight to see if they have checked in during the day.  If not, the service sends an SMS to the caregiver.
+</core-functionality>
+
+<requirement>
+For this first version, no payment is required.  The caregive message is only a test.  We assume everyone is in the same timezone.  User effort to set up and test the service should be minimal.
+</requirement>
+
+<userstory>
+A prospective user tests the service:
+
+The user navigates to our home page.
+
+They sign in with google.  The webapp now knows their name and email.
+
+They enter the name and phone number of their caregiver.  The user record has a serial id and these four fields.   No other account info is required for the free test.
+
+The screen shows a big "still okay" button.  When the user clicks it to check in, a record is written to the database.  The button cannot be clicked again until midnight.
+
+At midnight, the service checks to see if all users have checked in during the day.  
+
+For the ones who have not checked in, the service sends a test SMS message to the caregiver.   Something like "Don't be alarmed.  Fred Mouchabouche has identified you as their caregiver.  This is only a test message to see how it all works.  The message would be different if Fred actually needs your help.  Please contact Fred at fred@gmail.com to let him know the test worked."
+</userstory>
