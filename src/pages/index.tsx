@@ -8,9 +8,16 @@ export default function Home() {
   const router = useRouter();
   const [caregiverName, setCaregiverName] = useState("");
   const [caregiverPhone, setCaregiverPhone] = useState("");
+  const [caregiverEmail, setCaregiverEmail] = useState("");
+  const [checkInInterval, setCheckInInterval] = useState(24);
   const [canCheckIn, setCanCheckIn] = useState(true);
   const [lastCheckIn, setLastCheckIn] = useState<Date | null>(null);
-  const [formData, setFormData] = useState({ caregiverName: "", caregiverPhone: "" });
+  const [formData, setFormData] = useState({ 
+    caregiverName: "", 
+    caregiverPhone: "",
+    caregiverEmail: "",
+    checkInInterval: 24
+  });
 
   useEffect(() => {
     if (status === "authenticated") {
@@ -21,6 +28,8 @@ export default function Home() {
           if (data.caregiverName) {
             setCaregiverName(data.caregiverName);
             setCaregiverPhone(data.caregiverPhone);
+            setCaregiverEmail(data.caregiverEmail);
+            setCheckInInterval(data.checkInInterval);
           }
         });
 
@@ -32,13 +41,13 @@ export default function Home() {
             const lastCheckInDate = new Date(data.lastCheckIn);
             setLastCheckIn(lastCheckInDate);
             const now = new Date();
-            const midnight = new Date(now);
-            midnight.setHours(0, 0, 0, 0);
-            setCanCheckIn(lastCheckInDate < midnight);
+            const nextCheckIn = new Date(lastCheckInDate);
+            nextCheckIn.setHours(nextCheckIn.getHours() + checkInInterval);
+            setCanCheckIn(now >= nextCheckIn);
           }
         });
     }
-  }, [status]);
+  }, [status, checkInInterval]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -52,6 +61,8 @@ export default function Home() {
     if (response.ok) {
       setCaregiverName(formData.caregiverName);
       setCaregiverPhone(formData.caregiverPhone);
+      setCaregiverEmail(formData.caregiverEmail);
+      setCheckInInterval(formData.checkInInterval);
       router.reload();
     }
   };
@@ -127,6 +138,35 @@ export default function Home() {
                     required
                   />
                 </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">
+                    Caregiver Email
+                  </label>
+                  <input
+                    type="email"
+                    value={formData.caregiverEmail}
+                    onChange={(e) => setFormData(prev => ({ ...prev, caregiverEmail: e.target.value }))}
+                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">
+                    Check-in Interval (hours)
+                  </label>
+                  <select
+                    value={formData.checkInInterval}
+                    onChange={(e) => setFormData(prev => ({ ...prev, checkInInterval: parseInt(e.target.value) }))}
+                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                  >
+                    <option value="1">Every hour</option>
+                    <option value="2">Every 2 hours</option>
+                    <option value="4">Every 4 hours</option>
+                    <option value="8">Every 8 hours</option>
+                    <option value="12">Every 12 hours</option>
+                    <option value="24">Every 24 hours</option>
+                  </select>
+                </div>
                 <button
                   type="submit"
                   className="w-full bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-600"
@@ -139,6 +179,8 @@ export default function Home() {
                 <div className="text-center">
                   <p className="text-gray-600">Your caregiver: {caregiverName}</p>
                   <p className="text-gray-600">Phone: {caregiverPhone}</p>
+                  <p className="text-gray-600">Email: {caregiverEmail}</p>
+                  <p className="text-gray-600">Check-in interval: {checkInInterval} hours</p>
                 </div>
                 <button
                   onClick={handleCheckIn}

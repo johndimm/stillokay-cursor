@@ -1,12 +1,17 @@
 import { PrismaClient } from "@prisma/client";
-import twilio from "twilio";
+import nodemailer from "nodemailer";
 import type { NextApiRequest, NextApiResponse } from "next";
 
 const prisma = new PrismaClient();
-const twilioClient = twilio(
-  process.env.TWILIO_ACCOUNT_SID,
-  process.env.TWILIO_AUTH_TOKEN
-);
+
+// Create a transporter using Gmail
+const transporter = nodemailer.createTransport({
+  service: 'gmail',
+  auth: {
+    user: process.env.EMAIL_USER,
+    pass: process.env.EMAIL_PASSWORD,
+  },
+});
 
 export default async function handler(
   req: NextApiRequest,
@@ -35,16 +40,17 @@ export default async function handler(
     },
   });
 
-  // Send SMS notifications to caregivers
+  // Send email notifications to caregivers
   for (const user of users) {
     try {
-      await twilioClient.messages.create({
-        body: `Don't be alarmed. ${user.name} has identified you as their caregiver. This is only a test message to see how it all works. The message would be different if ${user.name} actually needs your help. Please contact ${user.name} at ${user.email} to let them know the test worked.`,
-        from: process.env.TWILIO_PHONE_NUMBER!,
-        to: user.caregiverPhone,
+      await transporter.sendMail({
+        from: process.env.EMAIL_USER,
+        to: user.email, // Send to user's email for testing
+        subject: `Test Notification for ${user.name}`,
+        text: `Don't be alarmed. ${user.name} has identified you as their caregiver. This is only a test message to see how it all works. The message would be different if ${user.name} actually needs your help. Please contact ${user.name} at ${user.email} to let them know the test worked.`,
       });
     } catch (error) {
-      console.error(`Failed to send SMS to ${user.caregiverPhone}:`, error);
+      console.error(`Failed to send email to ${user.email}:`, error);
     }
   }
 

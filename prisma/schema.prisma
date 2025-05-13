@@ -1,6 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -11,19 +8,25 @@ datasource db {
 }
 
 model User {
-  id          String    @id @default(cuid())
-  name        String
-  email       String    @unique
-  caregiverName String
-  caregiverPhone String
-  checkIns    CheckIn[]
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+  id              String    @id @default(cuid())
+  name            String
+  email           String    @unique
+  caregiverName   String    @map("caregiver_name")
+  caregiverPhone  String    @map("caregiver_phone")
+  caregiverEmail  String    @map("caregiver_email")
+  checkInInterval Int       @default(24) @map("check_in_interval")
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+  checkIns        CheckIn[]
+
+  @@map("users")
 }
 
 model CheckIn {
   id        String   @id @default(cuid())
-  userId    String
+  userId    String   @map("user_id")
+  createdAt DateTime @default(now()) @map("created_at")
   user      User     @relation(fields: [userId], references: [id])
-  createdAt DateTime @default(now())
-} 
+
+  @@map("check_ins")
+}
