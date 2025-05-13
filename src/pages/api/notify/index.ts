@@ -11,7 +11,10 @@ export default async function handler(
   }
 
   try {
-    // Find users who haven't checked in within their interval
+    // Find users who haven't checked in today
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
     const users = await prisma.user.findMany({
       include: {
         checkIns: {
@@ -35,19 +38,9 @@ export default async function handler(
 
     for (const user of users) {
       const lastCheckIn = user.checkIns[0]?.createdAt;
-      const now = new Date();
       
-      if (!lastCheckIn) {
-        // No check-ins yet, send notification
-        await sendNotification(transporter, user);
-        continue;
-      }
-
-      const nextCheckIn = new Date(lastCheckIn);
-      nextCheckIn.setHours(nextCheckIn.getHours() + user.checkInInterval);
-
-      if (now >= nextCheckIn) {
-        // User hasn't checked in within their interval, send notification
+      if (!lastCheckIn || lastCheckIn < today) {
+        // No check-ins today, send notification
         await sendNotification(transporter, user);
       }
     }
@@ -64,12 +57,12 @@ async function sendNotification(transporter: nodemailer.Transporter, user: any) 
     from: process.env.SMTP_FROM,
     to: user.caregiverEmail,
     subject: `Still Okay - No Check-in from ${user.name}`,
-    text: `Hello ${user.caregiverName},\n\n${user.name} has not checked in within their ${user.checkInInterval}-hour interval. Please check on them.\n\nBest regards,\nStill Okay`,
+    text: `Hello ${user.caregiverName},\n\n${user.name} has not checked in today. Please check on them.\n\nBest regards,\nStill Okay`,
     html: `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
         <h2 style="color: #333;">Still Okay - No Check-in from ${user.name}</h2>
         <p>Hello ${user.caregiverName},</p>
-        <p>${user.name} has not checked in within their ${user.checkInInterval}-hour interval. Please check on them.</p>
+        <p>${user.name} has not checked in today. Please check on them.</p>
         <p>Best regards,<br>Still Okay</p>
       </div>
     `,

@@ -20,11 +20,9 @@ export default async function handler(
   res: NextApiResponse
 ) {
   // Verify the request is coming from our cron service
-  /*
   if (req.headers.authorization !== `Bearer ${process.env.CRON_SECRET}`) {
     return res.status(401).json({ error: "Unauthorized" });
   }
-    */
 
   const today = new Date();
   today.setHours(0, 0, 0, 0);
