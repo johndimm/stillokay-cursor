@@ -35,7 +35,6 @@ export default async function handler(
           caregiverName: user.caregiverName,
           caregiverPhone: user.caregiverPhone,
           caregiverEmail: user.caregiverEmail,
-          checkInInterval: user.checkInInterval,
         });
       } catch (dbError) {
         console.error("Database error:", dbError);
@@ -45,9 +44,9 @@ export default async function handler(
 
     if (req.method === "POST") {
       console.log("POST request with body:", req.body);
-      const { caregiverName, caregiverPhone, caregiverEmail, checkInInterval } = req.body;
+      const { caregiverName, caregiverPhone, caregiverEmail } = req.body;
 
-      if (!caregiverName || !caregiverPhone || !caregiverEmail || !checkInInterval) {
+      if (!caregiverName || !caregiverPhone || !caregiverEmail) {
         console.log("Missing required fields");
         return res.status(400).json({ error: "Missing required fields" });
       }
@@ -59,7 +58,6 @@ export default async function handler(
             caregiverName,
             caregiverPhone,
             caregiverEmail,
-            checkInInterval,
           },
           create: {
             email: session.user?.email!,
@@ -67,7 +65,6 @@ export default async function handler(
             caregiverName,
             caregiverPhone,
             caregiverEmail,
-            checkInInterval,
           },
         });
         console.log("Created/updated user:", user);
