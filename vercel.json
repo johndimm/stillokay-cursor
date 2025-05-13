@@ -1,6 +1,6 @@
 {
     "crons": [{
       "path": "/api/cron/check-missed-checkins",
-      "schedule": "0 * * * *",
+      "schedule": "0 * * * *"
     }]
   }
