@@ -27,6 +27,11 @@ export default async function handler(
   const today = new Date();
   today.setHours(0, 0, 0, 0);
 
+  const log_messages:string[]= []
+  const log = (msg:string) => {
+    log_messages.push(msg)
+  }
+
   // Find all users who haven't checked in today
   const users = await prisma.user.findMany({
     where: {
@@ -42,15 +47,15 @@ export default async function handler(
     },
   });
 
-  console.log("Found users who haven't checked in:", users);
+  // log(`Found users who haven't checked in: ${JSON.stringify(users)}`);
 
   // Send email notifications to caregivers
   for (const user of users) {
     try {
-      console.log(`Sending email to caregiver ${user.caregiverName} at ${user.caregiverEmail}`);
+      log(`Sending email to caregiver ${user.caregiverName} at ${user.caregiverEmail}`);
       
       if (!user.caregiverEmail) {
-        console.error(`No caregiver email set for user ${user.name}`);
+        log(`No caregiver email set for user ${user.name}`);
         continue;
       }
 
@@ -68,11 +73,13 @@ export default async function handler(
           </div>
         `,
       });
-      console.log(`Successfully sent email to ${user.caregiverEmail}`);
+      log(`Successfully sent email to ${user.caregiverEmail}`);
     } catch (error) {
-      console.error(`Failed to send email to ${user.caregiverEmail}:`, error);
+      log(`Failed to send email to ${user.caregiverEmail}: ${error}`);
     }
   }
 
-  return res.json({ message: "Check completed", usersChecked: users.length });
+  return res.json({ message: "Check completed", 
+    usersChecked: users.length,
+    log: JSON.stringify(log_messages) });
 } 
