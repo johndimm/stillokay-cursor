@@ -106,12 +106,20 @@ export default function Home() {
           <div className="max-w-md mx-auto bg-white rounded-lg shadow-md p-6">
             <div className="flex justify-between items-center mb-4">
               <h1 className="text-2xl font-bold">Still Okay</h1>
-              <button
-                onClick={() => signOut()}
-                className="text-sm text-gray-500 hover:text-gray-700"
-              >
-                Sign out
-              </button>
+              <div className="flex items-center space-x-4">
+                <button
+                  onClick={() => router.push('/settings')}
+                  className="text-sm text-gray-500 hover:text-gray-700"
+                >
+                  Settings
+                </button>
+                <button
+                  onClick={() => signOut()}
+                  className="text-sm text-gray-500 hover:text-gray-700"
+                >
+                  Sign out
+                </button>
+              </div>
             </div>
 
             {!caregiverName ? (
