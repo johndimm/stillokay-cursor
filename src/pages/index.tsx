@@ -29,7 +29,7 @@ export default function Home() {
             setCaregiverName(data.caregiverName);
             setCaregiverPhone(data.caregiverPhone);
             setCaregiverEmail(data.caregiverEmail);
-            // setCheckInInterval(data.checkInInterval);
+            setCheckInInterval(data.checkInInterval);
           }
         });
 
@@ -182,7 +182,7 @@ export default function Home() {
                   <p className="text-gray-600">Your caregiver: {caregiverName}</p>
                   <p className="text-gray-600">Phone: {caregiverPhone}</p>
                   <p className="text-gray-600">Email: {caregiverEmail}</p>
-                  <p className="text-gray-600">Check-in interval: {checkInInterval} hours</p>
+                  <p className="text-gray-600">Check-in interval: {checkInInterval} {checkInInterval === 1 ? 'hour' : 'hours'}</p>
                 </div>
                 <button
                   onClick={handleCheckIn}

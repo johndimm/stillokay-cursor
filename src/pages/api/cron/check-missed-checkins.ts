@@ -32,25 +32,47 @@ export default async function handler(
     log_messages.push(msg)
   }
 
-  // Find all users who haven't checked in today
+  // Find all users
   const users = await prisma.user.findMany({
-    where: {
-      NOT: {
-        checkIns: {
-          some: {
-            createdAt: {
-              gte: today,
-            },
-          },
+    include: {
+      checkIns: {
+        orderBy: { createdAt: 'desc' },
+        take: 1,
+        select: {
+          id: true,
+          createdAt: true,
+          userId: true,
         },
       },
     },
+  }) as unknown as Array<{
+    id: string;
+    name: string;
+    email: string;
+    caregiverName: string;
+    caregiverPhone: string;
+    caregiverEmail: string | null;
+    checkInInterval: number;
+    createdAt: Date;
+    updatedAt: Date;
+    checkIns: { id: string; createdAt: Date; userId: string }[];
+  }>;
+
+  // Find users who missed their check-in interval
+  const missedUsers = users.filter(user => {
+    const interval = user.checkInInterval;
+    const lastCheckIn = user.checkIns[0]?.createdAt;
+    const now = new Date();
+    if (!lastCheckIn) return true; // Never checked in
+    const nextDue = new Date(lastCheckIn);
+    nextDue.setHours(nextDue.getHours() + interval);
+    return now >= nextDue;
   });
 
   // log(`Found users who haven't checked in: ${JSON.stringify(users)}`);
 
   // Send email notifications to caregivers
-  for (const user of users) {
+  for (const user of missedUsers) {
     try {
       log(`Sending email to caregiver ${user.caregiverName} at ${user.caregiverEmail}`);
       
@@ -63,12 +85,12 @@ export default async function handler(
         from: process.env.EMAIL_USER,
         to: user.caregiverEmail,
         subject: `Still Okay - No Check-in from ${user.name}`,
-        text: `Hello ${user.caregiverName},\n\n${user.name} has not checked in today. Please check on them.\n\nBest regards,\nStill Okay`,
+        text: `Hello ${user.caregiverName},\n\n${user.name} has not checked in within their interval (${user.checkInInterval} hours). Please check on them.\n\nBest regards,\nStill Okay`,
         html: `
           <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
             <h2 style="color: #333;">Still Okay - No Check-in from ${user.name}</h2>
             <p>Hello ${user.caregiverName},</p>
-            <p>${user.name} has not checked in today. Please check on them.</p>
+            <p>${user.name} has not checked in within their interval (${user.checkInInterval} hours). Please check on them.</p>
             <p>Best regards,<br>Still Okay</p>
           </div>
         `,
@@ -80,6 +102,6 @@ export default async function handler(
   }
 
   return res.json({ message: "Check completed", 
-    usersChecked: users.length,
+    usersChecked: missedUsers.length,
     log: JSON.stringify(log_messages) });
 } 

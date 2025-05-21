@@ -14,6 +14,7 @@ model User {
   caregiverName   String    @map("caregiver_name")
   caregiverPhone  String    @map("caregiver_phone")
   caregiverEmail  String?   @map("caregiver_email")
+  checkInInterval Int       @default(24) @map("check_in_interval")
   createdAt       DateTime  @default(now()) @map("created_at")
   updatedAt       DateTime  @updatedAt @map("updated_at")
   checkIns        CheckIn[]
