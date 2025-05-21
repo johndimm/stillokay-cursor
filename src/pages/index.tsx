@@ -29,7 +29,7 @@ export default function Home() {
             setCaregiverName(data.caregiverName);
             setCaregiverPhone(data.caregiverPhone);
             setCaregiverEmail(data.caregiverEmail);
-            setCheckInInterval(data.checkInInterval);
+            // setCheckInInterval(data.checkInInterval);
           }
         });
 
@@ -43,7 +43,9 @@ export default function Home() {
             const now = new Date();
             const nextCheckIn = new Date(lastCheckInDate);
             nextCheckIn.setHours(nextCheckIn.getHours() + checkInInterval);
+
             setCanCheckIn(now >= nextCheckIn);
+            console.log(`Last check-in: ${lastCheckInDate}, Next check-in: ${nextCheckIn}, Can check-in: ${canCheckIn}`);
           }
         });
     }
