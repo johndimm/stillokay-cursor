@@ -74,7 +74,7 @@ export default async function handler(
   // Send email notifications to caregivers
   for (const user of missedUsers) {
     try {
-      log(`Sending email to caregiver ${user.caregiverName} at ${user.caregiverEmail}`);
+      //log(`Sending email to caregiver ${user.caregiverName} at ${user.caregiverEmail}`);
       
       if (!user.caregiverEmail) {
         log(`No caregiver email set for user ${user.name}`);
