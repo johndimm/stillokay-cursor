@@ -101,7 +101,9 @@ export default async function handler(
     }
   }
 
+  const now = new Date();
   return res.json({ message: "Check completed", 
     usersChecked: missedUsers.length,
+    datetime: now.toISOString(),
     log: JSON.stringify(log_messages) });
 } 
