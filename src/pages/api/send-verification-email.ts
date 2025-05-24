@@ -30,6 +30,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     res.status(200).json({ message: "Verification email sent" });
   } catch (error) {
     console.error("Failed to send verification email:", error);
-    res.status(500).json({ error: "Failed to send verification email", details: error.message });
+    const errorMessage = error instanceof Error ? error.message : "Unknown error occurred";
+    res.status(500).json({ 
+      error: "Failed to send verification email", 
+      details: errorMessage 
+    });
   }
 } 
