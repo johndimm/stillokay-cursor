@@ -2,6 +2,7 @@ import { getServerSession } from "next-auth/next";
 import { authOptions } from "./auth/[...nextauth]";
 import type { NextApiRequest, NextApiResponse } from "next";
 import { prisma } from '../../lib/prisma';
+import { Prisma } from '@prisma/client';
 
 export default async function handler(
   req: NextApiRequest,
@@ -35,6 +36,7 @@ export default async function handler(
           caregiverName: user.caregiverName,
           caregiverPhone: user.caregiverPhone,
           caregiverEmail: user.caregiverEmail,
+          caregiverEmailVerified: user.caregiverEmailVerified,
           checkInInterval: user.checkInInterval,
         });
       } catch (dbError) {
@@ -53,20 +55,38 @@ export default async function handler(
       }
 
       try {
+        // Get current user data
+        const currentUser = await prisma.user.findUnique({
+          where: { email: session.user?.email! },
+        });
+
+        // If email is being changed, reset verification status
+        const emailChanged = currentUser?.caregiverEmail !== caregiverEmail;
+        
+        // Prepare update data
+        const updateData: Prisma.UserUpdateInput = {
+          caregiverName,
+          caregiverPhone,
+          caregiverEmail,
+          checkInInterval: Number(checkInInterval),
+        };
+
+        // Add verification reset if email changed
+        if (emailChanged) {
+          updateData.caregiverEmailVerified = false;
+          updateData.caregiverEmailToken = null;
+        }
+
         const user = await prisma.user.upsert({
           where: { email: session.user?.email! },
-          update: {
-            caregiverName,
-            caregiverPhone,
-            caregiverEmail,
-            checkInInterval: Number(checkInInterval),
-          },
+          update: updateData,
           create: {
             email: session.user?.email!,
             name: session.user?.name!,
             caregiverName,
             caregiverPhone,
             caregiverEmail,
+            caregiverEmailVerified: false,
             checkInInterval: Number(checkInInterval),
           },
         });
@@ -76,6 +96,7 @@ export default async function handler(
           caregiverName: user.caregiverName,
           caregiverPhone: user.caregiverPhone,
           caregiverEmail: user.caregiverEmail,
+          caregiverEmailVerified: user.caregiverEmailVerified,
           checkInInterval: user.checkInInterval,
         });
       } catch (dbError) {
