@@ -2,6 +2,7 @@ import { useSession } from "next-auth/react";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/router";
 import Head from "next/head";
+import { validateCaregiverInfo } from "../utils/validation";
 
 export default function Settings() {
   const { data: session, status } = useSession();
@@ -14,6 +15,8 @@ export default function Settings() {
   });
   const [isSaving, setIsSaving] = useState(false);
   const [message, setMessage] = useState({ type: "", text: "" });
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [isEmailVerified, setIsEmailVerified] = useState(false);
 
   useEffect(() => {
     if (status === "authenticated") {
@@ -28,6 +31,7 @@ export default function Settings() {
               caregiverEmail: data.caregiverEmail,
               checkInInterval: data.checkInInterval
             });
+            setIsEmailVerified(data.caregiverEmailVerified);
           }
         });
     }
@@ -37,6 +41,20 @@ export default function Settings() {
     e.preventDefault();
     setIsSaving(true);
     setMessage({ type: "", text: "" });
+    setErrors({});
+
+    // Validate caregiver information
+    const validation = validateCaregiverInfo({
+      caregiverName: formData.caregiverName,
+      caregiverPhone: formData.caregiverPhone,
+      caregiverEmail: formData.caregiverEmail
+    });
+
+    if (!validation.isValid) {
+      setErrors(validation.errors);
+      setIsSaving(false);
+      return;
+    }
 
     try {
       const response = await fetch("/api/user", {
@@ -48,11 +66,48 @@ export default function Settings() {
       });
 
       if (response.ok) {
+        const data = await response.json();
+        console.log("User data saved:", data);
         setMessage({ type: "success", text: "Settings saved successfully!" });
+        setIsEmailVerified(data.caregiverEmailVerified);
+        
+        // Automatically send verification email if not verified
+        if (!data.caregiverEmailVerified) {
+          console.log("Sending verification email with data:", {
+            userId: data.id,
+            caregiverEmail: formData.caregiverEmail,
+            caregiverName: formData.caregiverName
+          });
+          
+          const verificationResponse = await fetch("/api/send-verification-email", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              userId: data.id,
+              caregiverEmail: formData.caregiverEmail,
+              caregiverName: formData.caregiverName
+            })
+          });
+          
+          const verificationData = await verificationResponse.json();
+          console.log("Verification email response:", verificationData);
+          
+          if (!verificationResponse.ok) {
+            throw new Error(verificationData.error || "Failed to send verification email");
+          }
+          
+          setMessage({
+            type: "success",
+            text: `Verification email sent to ${formData.caregiverEmail}. Please check your inbox.`
+          });
+        }
       } else {
+        const errorData = await response.json();
+        console.error("Failed to save settings:", errorData);
         setMessage({ type: "error", text: "Failed to save settings. Please try again." });
       }
     } catch (error) {
+      console.error("Error in handleSubmit:", error);
       setMessage({ type: "error", text: "An error occurred. Please try again." });
     } finally {
       setIsSaving(false);
@@ -104,9 +159,14 @@ export default function Settings() {
                 type="text"
                 value={formData.caregiverName}
                 onChange={(e) => setFormData(prev => ({ ...prev, caregiverName: e.target.value }))}
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                className={`mt-1 block w-full rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 ${
+                  errors.caregiverName ? 'border-red-300' : 'border-gray-300'
+                }`}
                 required
               />
+              {errors.caregiverName && (
+                <p className="mt-1 text-sm text-red-600">{errors.caregiverName}</p>
+              )}
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700">
@@ -116,21 +176,38 @@ export default function Settings() {
                 type="tel"
                 value={formData.caregiverPhone}
                 onChange={(e) => setFormData(prev => ({ ...prev, caregiverPhone: e.target.value }))}
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                className={`mt-1 block w-full rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 ${
+                  errors.caregiverPhone ? 'border-red-300' : 'border-gray-300'
+                }`}
                 required
               />
+              {errors.caregiverPhone && (
+                <p className="mt-1 text-sm text-red-600">{errors.caregiverPhone}</p>
+              )}
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700">
                 Caregiver Email
               </label>
-              <input
-                type="email"
-                value={formData.caregiverEmail}
-                onChange={(e) => setFormData(prev => ({ ...prev, caregiverEmail: e.target.value }))}
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                required
-              />
+              <div className="mt-1">
+                <input
+                  type="email"
+                  value={formData.caregiverEmail}
+                  onChange={(e) => setFormData(prev => ({ ...prev, caregiverEmail: e.target.value }))}
+                  className={`block w-full rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 ${
+                    errors.caregiverEmail ? 'border-red-300' : 'border-gray-300'
+                  }`}
+                  required
+                />
+                {isEmailVerified ? (
+                  <p className="mt-1 text-sm text-green-600">✓ Email verified</p>
+                ) : (
+                  <p className="mt-1 text-sm text-yellow-600">Verification email sent to {formData.caregiverEmail}</p>
+                )}
+              </div>
+              {errors.caregiverEmail && (
+                <p className="mt-1 text-sm text-red-600">{errors.caregiverEmail}</p>
+              )}
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700">

@@ -32,10 +32,12 @@ export default async function handler(
         }
 
         return res.json({
+          id: user.id,
           caregiverName: user.caregiverName,
           caregiverPhone: user.caregiverPhone,
           caregiverEmail: user.caregiverEmail,
           checkInInterval: user.checkInInterval,
+          caregiverEmailVerified: user.caregiverEmailVerified
         });
       } catch (dbError) {
         console.error("Database error:", dbError);
@@ -73,10 +75,12 @@ export default async function handler(
         console.log("Created/updated user:", user);
 
         return res.json({
+          id: user.id,
           caregiverName: user.caregiverName,
           caregiverPhone: user.caregiverPhone,
           caregiverEmail: user.caregiverEmail,
           checkInInterval: user.checkInInterval,
+          caregiverEmailVerified: user.caregiverEmailVerified
         });
       } catch (dbError) {
         console.error("Database error:", dbError);
