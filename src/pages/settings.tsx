@@ -14,6 +14,8 @@ export default function Settings() {
   });
   const [isSaving, setIsSaving] = useState(false);
   const [message, setMessage] = useState({ type: "", text: "" });
+  const [isVerifying, setIsVerifying] = useState(false);
+  const [emailVerified, setEmailVerified] = useState(false);
 
   useEffect(() => {
     if (status === "authenticated") {
@@ -28,6 +30,7 @@ export default function Settings() {
               caregiverEmail: data.caregiverEmail,
               checkInInterval: data.checkInInterval
             });
+            setEmailVerified(data.caregiverEmailVerified);
           }
         });
     }
@@ -49,6 +52,10 @@ export default function Settings() {
 
       if (response.ok) {
         setMessage({ type: "success", text: "Settings saved successfully!" });
+        // If email was changed, send verification email
+        if (formData.caregiverEmail) {
+          await sendVerificationEmail();
+        }
       } else {
         setMessage({ type: "error", text: "Failed to save settings. Please try again." });
       }
@@ -56,6 +63,24 @@ export default function Settings() {
       setMessage({ type: "error", text: "An error occurred. Please try again." });
     } finally {
       setIsSaving(false);
+    }
+  };
+
+  const sendVerificationEmail = async () => {
+    setIsVerifying(true);
+    try {
+      const response = await fetch("/api/verify-email/send", {
+        method: "POST",
+      });
+      if (response.ok) {
+        setMessage({ type: "success", text: "Verification email sent! Please check your inbox." });
+      } else {
+        setMessage({ type: "error", text: "Failed to send verification email. Please try again." });
+      }
+    } catch (error) {
+      setMessage({ type: "error", text: "An error occurred while sending verification email." });
+    } finally {
+      setIsVerifying(false);
     }
   };
 
@@ -124,39 +149,55 @@ export default function Settings() {
               <label className="block text-sm font-medium text-gray-700">
                 Caregiver Email
               </label>
+              <div className="mt-1">
+                <input
+                  type="email"
+                  value={formData.caregiverEmail}
+                  onChange={(e) => setFormData(prev => ({ ...prev, caregiverEmail: e.target.value }))}
+                  className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                  required
+                />
+                {formData.caregiverEmail && (
+                  <div className="mt-2 flex items-center justify-between">
+                    <span className={`text-sm ${emailVerified ? 'text-green-600' : 'text-yellow-600'}`}>
+                      {emailVerified ? '✓ Email verified' : '⚠ Email not verified'}
+                    </span>
+                    {!emailVerified && (
+                      <button
+                        type="button"
+                        onClick={sendVerificationEmail}
+                        disabled={isVerifying}
+                        className="text-sm text-blue-600 hover:text-blue-800 disabled:text-gray-400"
+                      >
+                        {isVerifying ? 'Sending...' : 'Send verification email'}
+                      </button>
+                    )}
+                  </div>
+                )}
+              </div>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700">
+                Check-in Interval (hours)
+              </label>
               <input
-                type="email"
-                value={formData.caregiverEmail}
-                onChange={(e) => setFormData(prev => ({ ...prev, caregiverEmail: e.target.value }))}
+                type="number"
+                min="1"
+                max="24"
+                value={formData.checkInInterval}
+                onChange={(e) => setFormData(prev => ({ ...prev, checkInInterval: parseInt(e.target.value) }))}
                 className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
                 required
               />
             </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700">
-                Check-in Interval
-              </label>
-              <select
-                value={formData.checkInInterval}
-                onChange={(e) => setFormData(prev => ({ ...prev, checkInInterval: parseInt(e.target.value) }))}
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-              >
-                <option value="1">Every hour</option>
-                <option value="2">Every 2 hours</option>
-                <option value="4">Every 4 hours</option>
-                <option value="8">Every 8 hours</option>
-                <option value="12">Every 12 hours</option>
-                <option value="24">Every 24 hours</option>
-              </select>
-            </div>
             <button
               type="submit"
               disabled={isSaving}
-              className={`w-full bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-600 ${
-                isSaving ? "opacity-50 cursor-not-allowed" : ""
+              className={`w-full py-2 px-4 rounded text-white font-medium ${
+                isSaving ? 'bg-blue-400 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700'
               }`}
             >
-              {isSaving ? "Saving..." : "Save Settings"}
+              {isSaving ? 'Saving...' : 'Save Settings'}
             </button>
           </form>
         </div>
