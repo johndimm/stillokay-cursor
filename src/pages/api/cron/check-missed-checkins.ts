@@ -24,6 +24,17 @@ export default async function handler(
     return res.status(401).json({ error: "Unauthorized" });
   }
 
+  const now = new Date();
+  const isAfterMidnight = now.getHours() >= 0;
+
+  // If it's before midnight, don't send caregiver notifications
+  if (!isAfterMidnight) {
+    return res.json({ 
+      message: "Skipping caregiver notifications - before midnight",
+      datetime: now.toISOString()
+    });
+  }
+
   const today = new Date();
   today.setHours(0, 0, 0, 0);
 
@@ -62,20 +73,15 @@ export default async function handler(
   const missedUsers = users.filter(user => {
     const interval = user.checkInInterval;
     const lastCheckIn = user.checkIns[0]?.createdAt;
-    const now = new Date();
     if (!lastCheckIn) return true; // Never checked in
     const nextDue = new Date(lastCheckIn);
     nextDue.setHours(nextDue.getHours() + interval);
     return now >= nextDue;
   });
 
-  // log(`Found users who haven't checked in: ${JSON.stringify(users)}`);
-
   // Send email notifications to caregivers
   for (const user of missedUsers) {
     try {
-      //log(`Sending email to caregiver ${user.caregiverName} at ${user.caregiverEmail}`);
-      
       if (!user.caregiverEmail) {
         log(`No caregiver email set for user ${user.name}`);
         continue;
@@ -101,9 +107,10 @@ export default async function handler(
     }
   }
 
-  const now = new Date();
-  return res.json({ message: "Check completed", 
+  return res.json({ 
+    message: "Check completed", 
     usersChecked: missedUsers.length,
     datetime: now.toISOString(),
-    log: JSON.stringify(log_messages) });
+    log: JSON.stringify(log_messages) 
+  });
 } 
