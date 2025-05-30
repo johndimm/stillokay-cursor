@@ -73,6 +73,7 @@ export default function Home() {
   const [intervalEnd, setIntervalEnd] = useState(null);
   const [intervalHours, setIntervalHours] = useState(null);
   const [nextIntervalStart, setNextIntervalStart] = useState(null);
+  const [nextIntervalEnd, setNextIntervalEnd] = useState(null);
   const [timerId, setTimerId] = useState(null);
   const [events, setEvents] = useState([]);
   const [loadingEvents, setLoadingEvents] = useState(true);
@@ -86,6 +87,7 @@ export default function Home() {
       const data = await res.json();
       setCheckedIn(data.checkedIn);
       setNextIntervalStart(data.nextIntervalStart);
+      setNextIntervalEnd(data.nextIntervalEnd);
       setIntervalStart(data.intervalStart);
       setIntervalEnd(data.intervalEnd);
       setIntervalHours(data.intervalHours);
@@ -195,104 +197,131 @@ export default function Home() {
               {intervalStart && intervalEnd && intervalHours && (
                 <div style={{ width: '100%', maxWidth: 480, margin: '0 auto 24px auto', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
                   <div style={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'stretch', margin: '12px 0 8px 0', position: 'relative' }}>
-                    {/* Timeline Bar */}
-                    <div style={{ display: 'flex', width: '100%', height: 32, borderRadius: 12, /*overflow: 'hidden',*/ boxShadow: '0 1px 4px #e6e6e6', position: 'relative', background: 'transparent' }}>
-                      {/* Timeline background */}
-                      {!checkedIn ? (
-                        <div style={{ width: '100%', background: 'linear-gradient(90deg, #2a5bd7 60%, #5b8df7 100%)', transition: 'background 0.2s', height: '100%' }} />
-                      ) : (
-                        <>
-                          <div style={{ width: '50%', background: 'linear-gradient(90deg, #bbb 60%, #e0e0e0 100%)', transition: 'background 0.2s', height: '100%' }} />
-                          <div style={{ width: '50%', background: 'linear-gradient(90deg, #2a5bd7 60%, #5b8df7 100%)', transition: 'background 0.2s', height: '100%' }} />
-                        </>
-                      )}
-                      {/* Markers */}
-                      {(() => {
-                        const start = DateTime.fromISO(intervalStart);
-                        const end = DateTime.fromISO(intervalEnd);
-                        const now = timelineNow.setZone(start.zone);
+                    {/* Timeline Bar and Markers, with Labels */}
+                    {(() => {
+                      // Calculate previous and next intervals
+                      const prevStart = DateTime.fromISO(intervalStart);
+                      const prevEnd = DateTime.fromISO(intervalEnd);
+                      const nextStart = DateTime.fromISO(nextIntervalStart);
+                      const nextEnd = DateTime.fromISO(nextIntervalEnd);
+                      const now = timelineNow.setZone(prevStart.zone);
+                      // For checkedIn, show two bars: left (gray, prev), right (blue, next)
+                      // Render marker in the correct bar
+                      let leftMarker = null;
+                      let rightMarker = null;
+                      // Left bar: previous interval
+                      if (checkedIn && now >= prevStart && now <= prevEnd) {
+                        const totalMs = prevEnd.toMillis() - prevStart.toMillis();
+                        let nowPct = ((now.toMillis() - prevStart.toMillis()) / totalMs) * 100;
+                        leftMarker = (
+                          <div
+                            style={{ position: 'absolute', left: `${nowPct}%`, top: 0, height: '100%', width: 0, zIndex: 2 }}
+                            onMouseEnter={() => { setShowNowTooltip(true); }}
+                            onMouseLeave={() => setShowNowTooltip(false)}
+                          >
+                            <div style={{ position: 'absolute', left: -2, top: 0, height: 32, width: 4, background: '#e53935', borderRadius: 2, boxShadow: '0 0 4px #fff' }} />
+                            {showNowTooltip && (
+                              <div style={{ position: 'absolute', left: '50%', transform: 'translateX(-50%)', bottom: 32, minWidth: 100, maxWidth: 200, background: '#fff', color: '#222', border: '1.5px solid #e53935', borderRadius: 7, padding: '7px 12px', fontSize: 13, fontWeight: 500, boxShadow: '0 2px 8px #ddd', whiteSpace: 'normal', zIndex: 9999, textAlign: 'center', lineHeight: 1.4 }}>
+                                <div>Current time:</div>
+                                <div style={{ marginTop: 2, color: '#e53935', fontSize: 14, fontWeight: 700 }}>{now.toLocaleString(DateTime.TIME_SIMPLE)}</div>
+                              </div>
+                            )}
+                          </div>
+                        );
+                      }
+                      // Right bar: next interval
+                      if (checkedIn && now >= nextStart && now <= nextEnd) {
+                        const totalMs = nextEnd.toMillis() - nextStart.toMillis();
+                        let nowPct = ((now.toMillis() - nextStart.toMillis()) / totalMs) * 100;
+                        rightMarker = (
+                          <div
+                            style={{ position: 'absolute', left: `${nowPct}%`, top: 0, height: '100%', width: 0, zIndex: 2 }}
+                            onMouseEnter={() => { setShowNowTooltip(true); }}
+                            onMouseLeave={() => setShowNowTooltip(false)}
+                          >
+                            <div style={{ position: 'absolute', left: -2, top: 0, height: 32, width: 4, background: '#e53935', borderRadius: 2, boxShadow: '0 0 4px #fff' }} />
+                            {showNowTooltip && (
+                              <div style={{ position: 'absolute', left: '50%', transform: 'translateX(-50%)', bottom: 32, minWidth: 100, maxWidth: 200, background: '#fff', color: '#222', border: '1.5px solid #e53935', borderRadius: 7, padding: '7px 12px', fontSize: 13, fontWeight: 500, boxShadow: '0 2px 8px #ddd', whiteSpace: 'normal', zIndex: 9999, textAlign: 'center', lineHeight: 1.4 }}>
+                                <div>Current time:</div>
+                                <div style={{ marginTop: 2, color: '#e53935', fontSize: 14, fontWeight: 700 }}>{now.toLocaleString(DateTime.TIME_SIMPLE)}</div>
+                              </div>
+                            )}
+                          </div>
+                        );
+                      }
+                      // Not checked in: single bar, use current interval
+                      let singleMarker = null;
+                      if (!checkedIn) {
+                        const start = prevStart;
+                        const end = prevEnd;
                         const totalMs = end.toMillis() - start.toMillis();
-                        // Current time marker
                         let nowPct = ((now.toMillis() - start.toMillis()) / totalMs) * 100;
                         nowPct = Math.max(0, Math.min(100, nowPct));
-                        // Reminder marker (1 hour before end)
-                        const reminderTime = end.minus({ hours: 1 });
-                        let reminderPct = ((reminderTime.toMillis() - start.toMillis()) / totalMs) * 100;
-                        reminderPct = Math.max(0, Math.min(100, reminderPct));
-                        return (
-                          <>
-                            {/* Now marker: vertical red line */}
-                            <div
-                              style={{ position: 'absolute', left: `${nowPct}%`, top: 0, height: '100%', width: 0, zIndex: 2 }}
-                              onMouseEnter={() => { setShowNowTooltip(true); console.log('Now marker hover'); }}
-                              onMouseLeave={() => setShowNowTooltip(false)}
-                            >
-                              <div style={{ position: 'absolute', left: -2, top: 0, height: 32, width: 4, background: '#e53935', borderRadius: 2, boxShadow: '0 0 4px #fff' }} />
-                              {/* Tooltip for Now marker */}
-                              {showNowTooltip && (
-                                <div style={{ position: 'absolute', left: '50%', transform: 'translateX(-50%)', bottom: 32, minWidth: 100, maxWidth: 200, background: '#fff', color: '#222', border: '1.5px solid #e53935', borderRadius: 7, padding: '7px 12px', fontSize: 13, fontWeight: 500, boxShadow: '0 2px 8px #ddd', whiteSpace: 'normal', zIndex: 9999, textAlign: 'center', lineHeight: 1.4 }}>
-                                  <div>Current time:</div>
-                                  <div style={{ marginTop: 2, color: '#e53935', fontSize: 14, fontWeight: 700 }}>{now.toLocaleString(DateTime.TIME_SIMPLE)}</div>
-                                </div>
-                              )}
-                            </div>
-                            {/* Reminder marker: bell icon inside the bar */}
-                            <div style={{ position: 'absolute', left: `${reminderPct}%`, top: 4, height: 24, width: 0, zIndex: 3 }}
-                              onMouseEnter={() => { setShowReminderTooltip(true); console.log('Reminder bell hover'); }}
-                              onMouseLeave={() => setShowReminderTooltip(false)}
-                            >
-                              <span
-                                style={{
-                                  position: 'absolute',
-                                  left: '-12px',
-                                  top: '0px',
-                                  fontSize: 20,
-                                  color: now.toMillis() > reminderTime.toMillis() ? '#bbb' : '#ff9800',
-                                  filter: 'drop-shadow(0 1px 2px #fff)',
-                                  cursor: 'default'
-                                }}
-                              >🔔</span>
-                              {/* Tooltip for Reminder marker */}
-                              {showReminderTooltip && (
-                                <div style={{ position: 'absolute', left: '50%', transform: 'translateX(-50%)', bottom: 32, minWidth: 120, maxWidth: 220, background: '#fff', color: '#222', border: '1.5px solid #ff9800', borderRadius: 7, padding: '7px 12px', fontSize: 13, fontWeight: 500, boxShadow: '0 2px 8px #ddd', whiteSpace: 'normal', zIndex: 9999, textAlign: 'center', lineHeight: 1.4 }}>
-                                  <div>You will receive an email reminder to check in if you haven't already.</div>
-                                  <div style={{ marginTop: 4, color: '#ff9800', fontSize: 14, fontWeight: 700 }}>Time: {reminderTime.toLocaleString(DateTime.TIME_SIMPLE)}</div>
-                                </div>
-                              )}
-                            </div>
-                            {/* Now marker tooltip logic */}
-                            <style>{`
-                              .now-tooltip-parent:hover .now-tooltip {
-                                display: block !important;
-                              }
-                            `}</style>
-                          </>
+                        singleMarker = (
+                          <div
+                            style={{ position: 'absolute', left: `${nowPct}%`, top: 0, height: '100%', width: 0, zIndex: 2 }}
+                            onMouseEnter={() => { setShowNowTooltip(true); }}
+                            onMouseLeave={() => setShowNowTooltip(false)}
+                          >
+                            <div style={{ position: 'absolute', left: -2, top: 0, height: 32, width: 4, background: '#e53935', borderRadius: 2, boxShadow: '0 0 4px #fff' }} />
+                            {showNowTooltip && (
+                              <div style={{ position: 'absolute', left: '50%', transform: 'translateX(-50%)', bottom: 32, minWidth: 100, maxWidth: 200, background: '#fff', color: '#222', border: '1.5px solid #e53935', borderRadius: 7, padding: '7px 12px', fontSize: 13, fontWeight: 500, boxShadow: '0 2px 8px #ddd', whiteSpace: 'normal', zIndex: 9999, textAlign: 'center', lineHeight: 1.4 }}>
+                                <div>Current time:</div>
+                                <div style={{ marginTop: 2, color: '#e53935', fontSize: 14, fontWeight: 700 }}>{now.toLocaleString(DateTime.TIME_SIMPLE)}</div>
+                              </div>
+                            )}
+                          </div>
                         );
-                      })()}
-                    </div>
-                    {/* Timeline labels */}
-                    <div style={{ display: 'flex', width: '100%', justifyContent: 'space-between', fontSize: 13, color: '#2a5bd7', marginTop: 4, fontWeight: 500 }}>
-                      <span>{DateTime.fromISO(intervalStart).toLocaleString(DateTime.TIME_SIMPLE)}</span>
-                      {checkedIn && (
-                        <span style={{ color: '#888', fontWeight: 400 }}>
-                          {DateTime.fromISO(intervalStart).plus({ hours: intervalHours / 2 }).toLocaleString(DateTime.TIME_SIMPLE)}
-                        </span>
-                      )}
-                      <span style={{ color: checkedIn ? '#888' : '#2a5bd7', fontWeight: checkedIn ? 400 : 500 }}>
-                        {DateTime.fromISO(intervalEnd).toLocaleString(DateTime.TIME_SIMPLE)}
-                      </span>
-                      {checkedIn && (
-                        <span style={{ color: '#2a5bd7', fontWeight: 500 }}>
-                          {DateTime.fromISO(intervalEnd).plus({ hours: intervalHours / 2 }).toLocaleString(DateTime.TIME_SIMPLE)}
-                        </span>
-                      )}
-                      {checkedIn && (
-                        <span style={{ color: '#2a5bd7', fontWeight: 500 }}>
-                          {DateTime.fromISO(intervalEnd).plus({ hours: intervalHours }).toLocaleString(DateTime.TIME_SIMPLE)}
-                        </span>
-                      )}
-                    </div>
+                      }
+                      return (
+                        <>
+                          {/* Timeline Bar Rendering */}
+                          {checkedIn ? (
+                            <div style={{ display: 'flex', width: '100%', height: 32, borderRadius: 12, boxShadow: '0 1px 4px #e6e6e6', position: 'relative', background: 'transparent' }}>
+                              {/* Left (gray) bar: previous interval */}
+                              <div style={{ width: '50%', background: 'linear-gradient(90deg, #bbb 60%, #e0e0e0 100%)', height: '100%', position: 'relative' }}>
+                                {leftMarker}
+                              </div>
+                              {/* Right (blue) bar: next interval */}
+                              <div style={{ width: '50%', background: 'linear-gradient(90deg, #2a5bd7 60%, #5b8df7 100%)', height: '100%', position: 'relative' }}>
+                                {rightMarker}
+                              </div>
+                            </div>
+                          ) : (
+                            <div style={{ display: 'flex', width: '100%', height: 32, borderRadius: 12, boxShadow: '0 1px 4px #e6e6e6', position: 'relative', background: 'transparent' }}>
+                              {/* Single bar: current interval */}
+                              <div style={{ width: '100%', background: 'linear-gradient(90deg, #2a5bd7 60%, #5b8df7 100%)', height: '100%', position: 'relative' }}>
+                                {singleMarker}
+                              </div>
+                            </div>
+                          )}
+                          {/* Timeline labels */}
+                          <div style={{ display: 'flex', width: '100%', justifyContent: 'space-between', fontSize: 13, color: '#2a5bd7', marginTop: 4, fontWeight: 500 }}>
+                            <span>{DateTime.fromISO(intervalStart).toLocaleString(DateTime.TIME_SIMPLE)}</span>
+                            {checkedIn && (
+                              <span style={{ color: '#888', fontWeight: 400 }}>
+                                {DateTime.fromISO(intervalStart).plus({ hours: intervalHours / 2 }).toLocaleString(DateTime.TIME_SIMPLE)}
+                              </span>
+                            )}
+                            <span style={{ color: checkedIn ? '#888' : '#2a5bd7', fontWeight: checkedIn ? 400 : 500 }}>
+                              {DateTime.fromISO(intervalEnd).toLocaleString(DateTime.TIME_SIMPLE)}
+                            </span>
+                            {checkedIn && (
+                              <span style={{ color: '#2a5bd7', fontWeight: 500 }}>
+                                {DateTime.fromISO(intervalEnd).plus({ hours: intervalHours / 2 }).toLocaleString(DateTime.TIME_SIMPLE)}
+                              </span>
+                            )}
+                            {checkedIn && (
+                              <span style={{ color: '#2a5bd7', fontWeight: 500 }}>
+                                {DateTime.fromISO(intervalEnd).plus({ hours: intervalHours }).toLocaleString(DateTime.TIME_SIMPLE)}
+                              </span>
+                            )}
+                          </div>
+                        </>
+                      );
+                    })()}
                   </div>
+                  {/* Removed duplicate timeline labels here */}
                   <div style={{ textAlign: 'center', color: checkedIn ? '#888' : '#2a5bd7', fontWeight: 500, fontSize: 13, marginTop: 2 }}>
                     {/* Removed interval text */}
                   </div>
