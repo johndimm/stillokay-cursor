@@ -14,6 +14,14 @@ function formatEvent(event) {
     desc = `Caregiver opted in`;
   } else if (event_type === "caregiver_optout") {
     desc = `Caregiver opted out`;
+  } else if (event_type === "checkin") {
+    desc = "Checked in";
+  } else if (event_type === "missed_checkin") {
+    desc = "Missed check-in: user did not check in during the interval.";
+  } else if (event_type === "caregiver_alert_email_sent") {
+    desc = `Alert email sent to caregiver`;
+  } else if (event_type === "reminder_email_sent") {
+    desc = `Reminder email sent to user`;
   } else {
     desc = event_type;
   }
