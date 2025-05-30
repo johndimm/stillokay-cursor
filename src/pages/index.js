@@ -372,7 +372,13 @@ export default function Home() {
                         }} />
                         <div className={historyStyles.eventDetails}>
                           <div className={historyStyles.eventType}>{formatEvent(event)}</div>
-                          <div className={historyStyles.eventTime}>{new Date(event.created_at).toLocaleString()}</div>
+                          <div className={historyStyles.eventTime}>{
+                            (() => {
+                              const dt = DateTime.fromISO(event.created_at);
+                              // Show date and time, no seconds
+                              return dt.toLocaleString(DateTime.DATETIME_MED);
+                            })()
+                          }</div>
                         </div>
                       </li>
                     ))}

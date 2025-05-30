@@ -2,6 +2,7 @@ import { useSession } from "next-auth/react";
 import { useEffect, useState } from "react";
 import historyStyles from "@/styles/HistoryPage.module.css";
 import Link from "next/link";
+import { DateTime } from "luxon";
 
 function formatEvent(event) {
   const { event_type, event_data, created_at } = event;
@@ -108,7 +109,9 @@ export default function History() {
             }} />
             <div className={historyStyles.eventDetails}>
               <div className={historyStyles.eventType}>{formatEvent(event)}</div>
-              <div className={historyStyles.eventTime}>{new Date(event.created_at).toLocaleString()}</div>
+              <div className={historyStyles.eventTime}>{
+                DateTime.fromISO(event.created_at).toLocaleString(DateTime.DATETIME_MED)
+              }</div>
             </div>
           </li>
         ))}
