@@ -65,7 +65,7 @@ export default function History() {
   return (
     <div className={historyStyles.container}>
       <div style={{ marginBottom: 16 }}>
-        <Link href="/">&larr; Still Okay</Link>
+        <Link href="/" style={{ color: '#2a5bd7', fontWeight: 700, fontSize: 20, fontFamily: 'Geist, Arial, sans-serif', letterSpacing: '0.01em', textDecoration: 'none', display: 'inline-block', padding: '2px 0' }}>&larr; Still Okay Home</Link>
       </div>
       <div className={historyStyles.header}>History</div>
       <ul className={historyStyles.timeline}>

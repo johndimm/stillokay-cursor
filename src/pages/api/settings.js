@@ -72,12 +72,20 @@ export default async function handler(req, res) {
         const optOutUrl = `${baseUrl}/api/caregiver-confirm?token=${token}&action=optout`;
         const subject = `Please confirm: ${userName} wants you as their Still Okay caregiver`;
         const html = `
-          <p>Hello ${caregiver_name || ""},</p>
-          <p><b>${userName}</b> is using Still Okay, a service for people who live alone and want to make sure someone is notified if they don't check in regularly.</p>
-          <p>They have listed you as their caregiver. If you agree to be their caregiver, you'll get an alert if they miss a check-in.</p>
-          <p><a href="${optInUrl}">Yes, I agree to be their caregiver</a></p>
-          <p>If you do not know this person or do not want to be their caregiver, you can opt out here: <a href="${optOutUrl}">Opt out</a></p>
-          <p>Learn more at <a href="https://stillokay.com">Still Okay</a>.</p>
+          <div style="font-family: Arial, sans-serif; background: #f9f9f9; padding: 32px 0;">
+            <div style="max-width: 480px; margin: 0 auto; background: #fff; border-radius: 14px; box-shadow: 0 2px 16px #eee; padding: 32px 28px;">
+              <h2 style="color: #2a5bd7; margin-top: 0;">Still Okay Caregiver Confirmation</h2>
+              <p style="font-size: 16px; color: #222;">Hello <b>${caregiver_name || ""}</b>,</p>
+              <p style="font-size: 16px; color: #222;"><b>${userName}</b> is using Still Okay, a service for people who live alone and want to make sure someone is notified if they don't check in regularly.</p>
+              <p style="font-size: 16px; color: #222;">They have listed you as their caregiver. If you agree to be their caregiver, you'll get an alert if they miss a check-in.</p>
+              <div style="margin: 32px 0 24px 0; display: flex; gap: 18px; flex-wrap: wrap;">
+                <a href="${optInUrl}" style="background: #2a5bd7; color: #fff; text-decoration: none; padding: 14px 32px; border-radius: 8px; font-size: 16px; font-weight: 600; display: inline-block;">Yes, I agree to be their caregiver</a>
+                <a href="${optOutUrl}" style="background: #e53935; color: #fff; text-decoration: none; padding: 14px 32px; border-radius: 8px; font-size: 16px; font-weight: 600; display: inline-block;">Opt out</a>
+              </div>
+              <p style="font-size: 15px; color: #555;">If you do not know this person or do not want to be their caregiver, you can opt out above.</p>
+              <p style="font-size: 15px; color: #888; margin-top: 32px;">Learn more at <a href="https://stillokay.com" style="color: #2a5bd7;">Still Okay</a>.</p>
+            </div>
+          </div>
         `;
         await sendEmail({
           to: caregiver_email,

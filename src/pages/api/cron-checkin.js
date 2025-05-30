@@ -89,9 +89,20 @@ export default async function handler(req, res) {
           await sendEmail({
             to: user_email,
             subject: `Reminder: Please check in with Still Okay`,
-            html: `<p>Hello ${user_name},</p>
-                   <p>This is a reminder to check in before your interval ends at ${intervalEnd.toFormat('ff')} (${timezone}).</p>
-                   <p>If you do not check in, your caregiver will be notified.</p>`
+            html: `
+              <div style="font-family: Arial, sans-serif; background: #f9f9f9; padding: 32px 0;">
+                <div style="max-width: 480px; margin: 0 auto; background: #fff; border-radius: 14px; box-shadow: 0 2px 16px #eee; padding: 32px 28px;">
+                  <h2 style="color: #2a5bd7; margin-top: 0;">Still Okay Check-In Reminder</h2>
+                  <p style="font-size: 16px; color: #222;">Hello <b>${user_name}</b>,</p>
+                  <p style="font-size: 16px; color: #222;">This is a reminder to check in before your interval ends at <b>${intervalEnd.toFormat('ff')} (${timezone})</b>.</p>
+                  <div style="margin: 32px 0 24px 0;">
+                    <a href="${process.env.NEXTAUTH_URL || 'http://localhost:3000'}" style="background: #43a047; color: #fff; text-decoration: none; padding: 16px 40px; border-radius: 8px; font-size: 18px; font-weight: 700; display: inline-block;">Check In Now</a>
+                  </div>
+                  <p style="font-size: 15px; color: #555;">If you do not check in, your caregiver will be notified.</p>
+                  <p style="font-size: 15px; color: #888; margin-top: 32px;">Learn more at <a href="https://stillokay.com" style="color: #2a5bd7;">Still Okay</a>.</p>
+                </div>
+              </div>
+            `
           });
           // Log event: reminder_email_sent
           await client.query(

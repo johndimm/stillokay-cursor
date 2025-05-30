@@ -93,7 +93,7 @@ export default function Settings() {
   return (
     <div className={settingsStyles.container}>
       <div className={settingsStyles.backLink}>
-        <Link href="/">&larr; Still Okay</Link>
+        <Link href="/" style={{ color: '#2a5bd7', fontWeight: 700, fontSize: 20, fontFamily: 'Geist, Arial, sans-serif', letterSpacing: '0.01em', textDecoration: 'none', display: 'inline-block', padding: '2px 0' }}>&larr; Still Okay Home</Link>
       </div>
       <div className={settingsStyles.header}>Settings</div>
       <div className={settingsStyles.profile}>

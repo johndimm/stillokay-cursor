@@ -348,6 +348,7 @@ export default function Home() {
               <div className={homeStyles.navLinks}>
                 <Link href="/settings" className={homeStyles.navLink}>Settings</Link>
                 <Link href="/history" className={homeStyles.navLink}>History</Link>
+                <Link href="/guide" className={homeStyles.navLink}>User's Guide</Link>
               </div>
               <button className={homeStyles.signOutBtn} onClick={() => signOut()}>Sign out</button>
             </div>
