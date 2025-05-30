@@ -176,16 +176,46 @@ export default function Home() {
               {/* Interval Timeline Bar */}
               {intervalStart && intervalEnd && intervalHours && (
                 <div style={{ width: '100%', maxWidth: 480, margin: '0 auto 24px auto', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                  <div style={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'stretch', margin: '12px 0 8px 0' }}>
-                    <div style={{ display: 'flex', width: '100%', height: 18, borderRadius: 8, overflow: 'hidden', boxShadow: '0 1px 4px #e6e6e6' }}>
+                  <div style={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'stretch', margin: '12px 0 8px 0', position: 'relative' }}>
+                    {/* Timeline Bar */}
+                    <div style={{ display: 'flex', width: '100%', height: 18, borderRadius: 8, overflow: 'hidden', boxShadow: '0 1px 4px #e6e6e6', position: 'relative', background: 'transparent' }}>
+                      {/* Timeline background */}
                       {!checkedIn ? (
-                        <div style={{ width: '100%', background: 'linear-gradient(90deg, #2a5bd7 60%, #5b8df7 100%)', transition: 'background 0.2s' }} />
+                        <div style={{ width: '100%', background: 'linear-gradient(90deg, #2a5bd7 60%, #5b8df7 100%)', transition: 'background 0.2s', height: '100%' }} />
                       ) : (
                         <>
-                          <div style={{ width: '50%', background: 'linear-gradient(90deg, #bbb 60%, #e0e0e0 100%)', transition: 'background 0.2s' }} />
-                          <div style={{ width: '50%', background: 'linear-gradient(90deg, #2a5bd7 60%, #5b8df7 100%)', transition: 'background 0.2s' }} />
+                          <div style={{ width: '50%', background: 'linear-gradient(90deg, #bbb 60%, #e0e0e0 100%)', transition: 'background 0.2s', height: '100%' }} />
+                          <div style={{ width: '50%', background: 'linear-gradient(90deg, #2a5bd7 60%, #5b8df7 100%)', transition: 'background 0.2s', height: '100%' }} />
                         </>
                       )}
+                      {/* Markers */}
+                      {(() => {
+                        const start = DateTime.fromISO(intervalStart);
+                        const end = DateTime.fromISO(intervalEnd);
+                        const now = DateTime.now().setZone(start.zone);
+                        const totalMs = end.toMillis() - start.toMillis();
+                        // Current time marker
+                        let nowPct = ((now.toMillis() - start.toMillis()) / totalMs) * 100;
+                        nowPct = Math.max(0, Math.min(100, nowPct));
+                        // Reminder marker (1 hour before end)
+                        const reminderTime = end.minus({ hours: 1 });
+                        let reminderPct = ((reminderTime.toMillis() - start.toMillis()) / totalMs) * 100;
+                        reminderPct = Math.max(0, Math.min(100, reminderPct));
+                        return (
+                          <>
+                            {/* Reminder marker */}
+                            <div style={{ position: 'absolute', left: `${reminderPct}%`, top: 0, height: '100%', width: 0, zIndex: 2 }}>
+                              <div style={{ position: 'absolute', left: -1, top: 0, height: 18, width: 2, background: '#ff9800', borderRadius: 1 }} />
+                              <div style={{ position: 'absolute', left: -24, top: 20, fontSize: 11, color: '#ff9800', whiteSpace: 'nowrap' }}>Reminder</div>
+                            </div>
+                            {/* Now marker */}
+                            <div style={{ position: 'absolute', left: `${nowPct}%`, top: 0, height: '100%', width: 0, zIndex: 2 }}>
+                              <div style={{ position: 'absolute', left: -1, top: 0, height: 18, width: 2, background: '#2a5bd7', borderRadius: 1 }} />
+                              <div style={{ position: 'absolute', left: -10, top: 20, fontSize: 11, color: '#2a5bd7', whiteSpace: 'nowrap' }}>Now</div>
+                            </div>
+                          </>
+                        );
+                      })()}
                     </div>
                     {/* Timeline labels */}
                     <div style={{ display: 'flex', width: '100%', justifyContent: 'space-between', fontSize: 13, color: '#2a5bd7', marginTop: 4, fontWeight: 500 }}>
