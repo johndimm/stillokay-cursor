@@ -9,7 +9,7 @@ console.log("GOOGLE_CLIENT_SECRET:", process.env.GOOGLE_CLIENT_SECRET);
 console.log("NEXTAUTH_URL:", process.env.NEXTAUTH_URL);
 console.log("NEXTAUTH_SECRET:", process.env.NEXTAUTH_SECRET);
 
-export default NextAuth({
+export const authOptions = {
   providers: [
     GoogleProvider({
       clientId: process.env.GOOGLE_CLIENT_ID,
@@ -49,4 +49,6 @@ export default NextAuth({
       return session;
     },
   },
-}); 
+};
+
+export default NextAuth(authOptions); 
