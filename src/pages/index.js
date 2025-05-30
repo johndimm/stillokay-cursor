@@ -190,7 +190,15 @@ export default function Home() {
               </button>
               {checkedIn && nextIntervalStart && (
                 <div style={{ color: '#888', marginBottom: 16, fontSize: 16 }}>
-                  Checked in! You can check in again at {DateTime.fromISO(nextIntervalStart).toLocaleString(DateTime.DATETIME_MED)}
+                  {(() => {
+                    const next = DateTime.fromISO(nextIntervalStart);
+                    const now = DateTime.now().setZone(next.zoneName);
+                    if (next.hasSame(now, 'day')) {
+                      return <>Checked in! You can check in again at {next.toLocaleString(DateTime.TIME_SIMPLE)}</>;
+                    } else {
+                      return <>Checked in! You can check in again at {next.toLocaleString(DateTime.DATETIME_MED)}</>;
+                    }
+                  })()}
                 </div>
               )}
               {/* Interval Timeline Bar */}
