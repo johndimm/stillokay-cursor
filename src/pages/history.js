@@ -65,7 +65,7 @@ export default function History() {
   return (
     <div className={historyStyles.container}>
       <div style={{ marginBottom: 16 }}>
-        <Link href="/">&larr; Home</Link>
+        <Link href="/">&larr; Still Okay</Link>
       </div>
       <div className={historyStyles.header}>History</div>
       <ul className={historyStyles.timeline}>
@@ -78,8 +78,26 @@ export default function History() {
               ' ' +
               (historyStyles[event.event_type + 'Bg'] || historyStyles.eventBg)
             }
+            style={{ display: 'flex', alignItems: 'center', gap: 12 }}
           >
-            <span className={historyStyles.dot + ' ' + historyStyles[event.event_type]}></span>
+            <span style={{
+              display: 'inline-block',
+              width: 14,
+              height: 14,
+              borderRadius: '50%',
+              marginRight: 8,
+              background:
+                event.event_type === 'checkin' ? '#43a047' :
+                event.event_type === 'reminder' ? '#ff9800' :
+                event.event_type === 'missed_checkin_alert' ? '#e53935' :
+                event.event_type === 'caregiver_email_sent' ? '#1976d2' :
+                event.event_type === 'caregiver_updated' ? '#8e24aa' :
+                event.event_type === 'caregiver_optin' ? '#009688' :
+                event.event_type === 'caregiver_optout' ? '#757575' :
+                '#bdbdbd',
+              border: '2px solid #fff',
+              boxShadow: '0 1px 4px #eee',
+            }} />
             <div className={historyStyles.eventDetails}>
               <div className={historyStyles.eventType}>{formatEvent(event)}</div>
               <div className={historyStyles.eventTime}>{new Date(event.created_at).toLocaleString()}</div>

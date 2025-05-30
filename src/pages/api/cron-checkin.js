@@ -58,10 +58,15 @@ export default async function handler(req, res) {
                    <p><b>${user_name}</b> did not check in during their interval ending at ${prevIntervalEnd.toFormat('ff')} (${timezone}).</p>
                    <p>This is an automated alert from Still Okay.</p>`
           });
-          // Log event
+          // Log event: missed_checkin
           await client.query(
             'INSERT INTO history (user_id, event_type, event_data) VALUES ($1, $2, $3)',
-            [user_id, 'missed_checkin_alert', JSON.stringify({ caregiver_email, interval_end: prevIntervalEnd.toISO() })]
+            [user_id, 'missed_checkin', JSON.stringify({ interval_end: prevIntervalEnd.toISO() })]
+          );
+          // Log event: caregiver_alert_email_sent
+          await client.query(
+            'INSERT INTO history (user_id, event_type, event_data) VALUES ($1, $2, $3)',
+            [user_id, 'caregiver_alert_email_sent', JSON.stringify({ caregiver_email, interval_end: prevIntervalEnd.toISO() })]
           );
           alertsSent++;
           actions.push({
@@ -88,6 +93,11 @@ export default async function handler(req, res) {
                    <p>This is a reminder to check in before your interval ends at ${intervalEnd.toFormat('ff')} (${timezone}).</p>
                    <p>If you do not check in, your caregiver will be notified.</p>`
           });
+          // Log event: reminder_email_sent
+          await client.query(
+            'INSERT INTO history (user_id, event_type, event_data) VALUES ($1, $2, $3)',
+            [user_id, 'reminder_email_sent', JSON.stringify({ user_email, interval_end: intervalEnd.toISO() })]
+          );
           remindersSent++;
           actions.push({
             type: 'reminder',

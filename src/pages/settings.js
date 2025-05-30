@@ -93,7 +93,7 @@ export default function Settings() {
   return (
     <div className={settingsStyles.container}>
       <div className={settingsStyles.backLink}>
-        <Link href="/">&larr; Home</Link>
+        <Link href="/">&larr; Still Okay</Link>
       </div>
       <div className={settingsStyles.header}>Settings</div>
       <div className={settingsStyles.profile}>

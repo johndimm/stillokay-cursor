@@ -30,6 +30,14 @@ function formatEvent(event) {
     desc = `Caregiver opted in`;
   } else if (event_type === "caregiver_optout") {
     desc = `Caregiver opted out`;
+  } else if (event_type === "checkin") {
+    desc = "Checked in";
+  } else if (event_type === "missed_checkin") {
+    desc = "Missed check-in: user did not check in during the interval.";
+  } else if (event_type === "caregiver_alert_email_sent") {
+    desc = `Alert email sent to caregiver`;
+  } else if (event_type === "reminder_email_sent") {
+    desc = `Reminder email sent to user`;
   } else {
     desc = event_type;
   }
@@ -68,6 +76,9 @@ export default function Home() {
   const [timerId, setTimerId] = useState(null);
   const [events, setEvents] = useState([]);
   const [loadingEvents, setLoadingEvents] = useState(true);
+  const [timelineNow, setTimelineNow] = useState(DateTime.now());
+  const [showNowTooltip, setShowNowTooltip] = useState(false);
+  const [showReminderTooltip, setShowReminderTooltip] = useState(false);
 
   async function fetchCheckinStatus() {
     const res = await fetch('/api/checkin-status');
@@ -104,6 +115,14 @@ export default function Home() {
     // eslint-disable-next-line
   }, []);
 
+  useEffect(() => {
+    // Update timeline every minute
+    const interval = setInterval(() => {
+      setTimelineNow(DateTime.now());
+    }, 60000);
+    return () => clearInterval(interval);
+  }, []);
+
   const handleCheckIn = async () => {
     setCheckingIn(true);
     try {
@@ -126,27 +145,26 @@ export default function Home() {
       </Head>
       <div className={`${styles.page} ${geistSans.variable} ${geistMono.variable} ${homeStyles.container}`}>
         <main className={styles.main}>
-          <h1>Still Okay</h1>
           {!session ? (
             <button onClick={() => signIn("google")}>Sign in with Google</button>
           ) : (
             <div style={{ width: "100%", display: "flex", flexDirection: "column", alignItems: "center" }}>
               <button
                 style={{
-                  background: checkedIn ? 'linear-gradient(180deg, #f3f3f3 0%, #e0e0e0 100%)' : 'linear-gradient(180deg, #fffbe6 0%, #ffe066 100%)',
-                  color: checkedIn ? '#aaa' : '#b88600',
+                  background: checkedIn ? 'linear-gradient(180deg, #e0e0e0 0%, #bdbdbd 100%)' : 'linear-gradient(180deg, #a8e063 0%, #56ab2f 100%)',
+                  color: checkedIn ? '#888' : '#fff',
                   fontSize: '2rem',
                   fontWeight: 700,
-                  border: '2px solid #ffe066',
+                  border: checkedIn ? '2px solid #bdbdbd' : '2px solid #56ab2f',
                   borderRadius: '18px',
                   padding: '36px 64px',
                   marginBottom: 32,
                   marginTop: 16,
-                  boxShadow: checkedIn ? '0 4px 24px rgba(180,180,180,0.10), 0 2px 8px #f3f3f3 inset' : '0 4px 24px rgba(255, 224, 102, 0.18), 0 2px 8px #fffbe6 inset',
+                  boxShadow: checkedIn ? '0 4px 24px rgba(180,180,180,0.10), 0 2px 8px #f3f3f3 inset' : '0 4px 24px rgba(88, 171, 47, 0.18), 0 2px 8px #a8e063 inset',
                   cursor: checkingIn || checkedIn ? 'not-allowed' : 'pointer',
                   letterSpacing: '0.03em',
                   transition: 'background 0.15s, box-shadow 0.15s, transform 0.08s',
-                  textShadow: checkedIn ? 'none' : '0 1px 0 #fffbe6, 0 2px 8px #ffe066',
+                  textShadow: checkedIn ? 'none' : '0 1px 0 #a8e063, 0 2px 8px #56ab2f',
                   position: 'relative',
                   overflow: 'hidden',
                   opacity: checkingIn || checkedIn ? 0.7 : 1,
@@ -178,7 +196,7 @@ export default function Home() {
                 <div style={{ width: '100%', maxWidth: 480, margin: '0 auto 24px auto', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
                   <div style={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'stretch', margin: '12px 0 8px 0', position: 'relative' }}>
                     {/* Timeline Bar */}
-                    <div style={{ display: 'flex', width: '100%', height: 18, borderRadius: 8, overflow: 'hidden', boxShadow: '0 1px 4px #e6e6e6', position: 'relative', background: 'transparent' }}>
+                    <div style={{ display: 'flex', width: '100%', height: 32, borderRadius: 12, /*overflow: 'hidden',*/ boxShadow: '0 1px 4px #e6e6e6', position: 'relative', background: 'transparent' }}>
                       {/* Timeline background */}
                       {!checkedIn ? (
                         <div style={{ width: '100%', background: 'linear-gradient(90deg, #2a5bd7 60%, #5b8df7 100%)', transition: 'background 0.2s', height: '100%' }} />
@@ -192,7 +210,7 @@ export default function Home() {
                       {(() => {
                         const start = DateTime.fromISO(intervalStart);
                         const end = DateTime.fromISO(intervalEnd);
-                        const now = DateTime.now().setZone(start.zone);
+                        const now = timelineNow.setZone(start.zone);
                         const totalMs = end.toMillis() - start.toMillis();
                         // Current time marker
                         let nowPct = ((now.toMillis() - start.toMillis()) / totalMs) * 100;
@@ -203,16 +221,51 @@ export default function Home() {
                         reminderPct = Math.max(0, Math.min(100, reminderPct));
                         return (
                           <>
-                            {/* Reminder marker */}
-                            <div style={{ position: 'absolute', left: `${reminderPct}%`, top: 0, height: '100%', width: 0, zIndex: 2 }}>
-                              <div style={{ position: 'absolute', left: -1, top: 0, height: 18, width: 2, background: '#ff9800', borderRadius: 1 }} />
-                              <div style={{ position: 'absolute', left: -24, top: 20, fontSize: 11, color: '#ff9800', whiteSpace: 'nowrap' }}>Reminder</div>
+                            {/* Now marker: vertical red line */}
+                            <div
+                              style={{ position: 'absolute', left: `${nowPct}%`, top: 0, height: '100%', width: 0, zIndex: 2 }}
+                              onMouseEnter={() => { setShowNowTooltip(true); console.log('Now marker hover'); }}
+                              onMouseLeave={() => setShowNowTooltip(false)}
+                            >
+                              <div style={{ position: 'absolute', left: -2, top: 0, height: 32, width: 4, background: '#e53935', borderRadius: 2, boxShadow: '0 0 4px #fff' }} />
+                              {/* Tooltip for Now marker */}
+                              {showNowTooltip && (
+                                <div style={{ position: 'absolute', left: '50%', transform: 'translateX(-50%)', bottom: 32, minWidth: 100, maxWidth: 200, background: '#fff', color: '#222', border: '1.5px solid #e53935', borderRadius: 7, padding: '7px 12px', fontSize: 13, fontWeight: 500, boxShadow: '0 2px 8px #ddd', whiteSpace: 'normal', zIndex: 9999, textAlign: 'center', lineHeight: 1.4 }}>
+                                  <div>Current time:</div>
+                                  <div style={{ marginTop: 2, color: '#e53935', fontSize: 14, fontWeight: 700 }}>{now.toLocaleString(DateTime.TIME_SIMPLE)}</div>
+                                </div>
+                              )}
                             </div>
-                            {/* Now marker */}
-                            <div style={{ position: 'absolute', left: `${nowPct}%`, top: 0, height: '100%', width: 0, zIndex: 2 }}>
-                              <div style={{ position: 'absolute', left: -1, top: 0, height: 18, width: 2, background: '#2a5bd7', borderRadius: 1 }} />
-                              <div style={{ position: 'absolute', left: -10, top: 20, fontSize: 11, color: '#2a5bd7', whiteSpace: 'nowrap' }}>Now</div>
+                            {/* Reminder marker: bell icon inside the bar */}
+                            <div style={{ position: 'absolute', left: `${reminderPct}%`, top: 4, height: 24, width: 0, zIndex: 3 }}
+                              onMouseEnter={() => { setShowReminderTooltip(true); console.log('Reminder bell hover'); }}
+                              onMouseLeave={() => setShowReminderTooltip(false)}
+                            >
+                              <span
+                                style={{
+                                  position: 'absolute',
+                                  left: '-12px',
+                                  top: '0px',
+                                  fontSize: 20,
+                                  color: now.toMillis() > reminderTime.toMillis() ? '#bbb' : '#ff9800',
+                                  filter: 'drop-shadow(0 1px 2px #fff)',
+                                  cursor: 'default'
+                                }}
+                              >🔔</span>
+                              {/* Tooltip for Reminder marker */}
+                              {showReminderTooltip && (
+                                <div style={{ position: 'absolute', left: '50%', transform: 'translateX(-50%)', bottom: 32, minWidth: 120, maxWidth: 220, background: '#fff', color: '#222', border: '1.5px solid #ff9800', borderRadius: 7, padding: '7px 12px', fontSize: 13, fontWeight: 500, boxShadow: '0 2px 8px #ddd', whiteSpace: 'normal', zIndex: 9999, textAlign: 'center', lineHeight: 1.4 }}>
+                                  <div>You will receive an email reminder to check in if you haven't already.</div>
+                                  <div style={{ marginTop: 4, color: '#ff9800', fontSize: 14, fontWeight: 700 }}>Time: {reminderTime.toLocaleString(DateTime.TIME_SIMPLE)}</div>
+                                </div>
+                              )}
                             </div>
+                            {/* Now marker tooltip logic */}
+                            <style>{`
+                              .now-tooltip-parent:hover .now-tooltip {
+                                display: block !important;
+                              }
+                            `}</style>
                           </>
                         );
                       })()}
@@ -241,7 +294,7 @@ export default function Home() {
                     </div>
                   </div>
                   <div style={{ textAlign: 'center', color: checkedIn ? '#888' : '#2a5bd7', fontWeight: 500, fontSize: 13, marginTop: 2 }}>
-                    {!checkedIn ? `Current interval (${intervalHours}h)` : `Current + Upcoming interval (${intervalHours}h each)`}
+                    {/* Removed interval text */}
                   </div>
                 </div>
               )}
@@ -259,8 +312,27 @@ export default function Home() {
                           ' ' +
                           (historyStyles[event.event_type + 'Bg'] || historyStyles.eventBg)
                         }
+                        style={{ display: 'flex', alignItems: 'center', gap: 12 }}
                       >
-                        <span className={historyStyles.dot + ' ' + historyStyles[event.event_type]}></span>
+                        {/* Colored bullet */}
+                        <span style={{
+                          display: 'inline-block',
+                          width: 14,
+                          height: 14,
+                          borderRadius: '50%',
+                          marginRight: 8,
+                          background:
+                            event.event_type === 'checkin' ? '#43a047' :
+                            event.event_type === 'reminder' ? '#ff9800' :
+                            event.event_type === 'missed_checkin_alert' ? '#e53935' :
+                            event.event_type === 'caregiver_email_sent' ? '#1976d2' :
+                            event.event_type === 'caregiver_updated' ? '#8e24aa' :
+                            event.event_type === 'caregiver_optin' ? '#009688' :
+                            event.event_type === 'caregiver_optout' ? '#757575' :
+                            '#bdbdbd',
+                          border: '2px solid #fff',
+                          boxShadow: '0 1px 4px #eee',
+                        }} />
                         <div className={historyStyles.eventDetails}>
                           <div className={historyStyles.eventType}>{formatEvent(event)}</div>
                           <div className={historyStyles.eventTime}>{new Date(event.created_at).toLocaleString()}</div>
