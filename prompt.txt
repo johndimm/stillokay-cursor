@@ -1,0 +1,86 @@
+<goal>
+Create a functional webpage and backend services for a new app called stillokay.
+</goal>
+
+<core-functionality>
+We want to make a webpage for people who live alone and worry what would happen if they suddently became incapacitated. To get started, they identify a caregiver by name and email address. The app presents a big "still okay" button and instructs the user to click it once a day.  The service checks every hour to see if they have checked in during the day.  If they do not by the end of the day, the service sends an email to the caregiver.
+
+</core-functionality>
+
+<requirement>
+The interval of 24 hours is only one of many setup options.  The user can pick an interval of 2, 4, 6, 8, or 10 hours as the check-in interval.
+
+Store all dates in UTC, but display them in the user's local timezone.  The day is defined as 12 AM to 12 AM in local time.
+
+If the user has not checked in by one hour before the end of the interval, send a reminder email to the user.
+
+If the user has not checked in by the end of the interval, send an alert to the caregiver.
+</requirement>
+
+<userstory>
+A prospective user tests the service:
+
+The user navigates to our home page.
+
+They sign in with google.  The webapp now knows their name and email.
+
+They enter the name and email of their caregiver.  The user record has a serial id and these four fields.   No other account info is required for the free test.
+
+The screen shows a big "still okay" button.  When the user clicks it to check in, a record is written to the database.  The button cannot be clicked again until midnight.
+
+Every hour, the service checks the database to see if a user whose interval has just ended but has not checked in. 
+
+For the ones who have not checked in, the service sends an email to the caregiver.   Something like "Don't be alarmed.  Fred Mouchabouche has identified you as their caregiver.  This is only a test message to see how it all works.  The message would be different if Fred actually needs your help.  Please contact Fred at fred@gmail.com to let him know the test worked."
+</userstory>
+
+
+<requirements>
+We need to confirm the caregiver's email.
+
+Send an email to the caregiver automatically when the user provides it on the settings page.  
+
+On settings, show whether the email has been verified.  
+
+Besides confirming their email, this email also introduces the candidate caregiver to Still Okay so the email should explain what we expect the caregiver to do. 
+
+Whenever the user changes their caregiver email, a validation of that new email address is needed.  Validation is not required if the caregiver email does not change.
+
+No emails can be sent unless the caregiver's email is confirmed and the caregiver has opted in.
+</requirements>
+
+<constraint>
+Send the email using the same function we are currently using to send an alert email to the caregiver.
+</constraint>
+
+<requirement>
+There are five pages:
+
+- the home page has the Still Okay button.  There is also a timeline showing how much time is left before the user has to check in.
+
+- the settings page lets you identify your caregiver and select your interval.  By default, the interval is 24 hours.
+
+- the history page shows all events:  checkins, confirmation email sent to caregiver, caregiver's response, reminder sent.
+
+- the User's Guide page tells how to use the app.
+
+- Sign-out
+</requirement>
+
+<requirement>
+If the user has not checked in this interval, the timeline shows the current interval only, with an indicator for "now" and another one showing when the reminder will be sent if needed.  The bar is blue.
+
+If the user has checked in during this interval, the timeline shows the current interval on the left in gray.  On the right, is the next interval, in blue.
+</requirement>
+
+<coding>
+Any complex SQL queries should be implemented as stored procedures.  
+
+All time calculations should be in a utility file.
+
+Use this postgres database:
+
+postgres://postgres:Leucate1@34.94.209.16:5432/stillokay
+
+Do not use prisma to connect to it.  Use pg.
+</coding>
+

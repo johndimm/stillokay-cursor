@@ -9,8 +9,12 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "luxon": "^3.6.1",
+    "next": "15.3.2",
+    "next-auth": "^4.24.11",
+    "nodemailer": "^6.10.1",
+    "pg": "^8.16.0",
     "react": "^19.0.0",
-    "react-dom": "^19.0.0",
-    "next": "15.3.2"
+    "react-dom": "^19.0.0"
   }
 }

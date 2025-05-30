@@ -1,0 +1,60 @@
+{
+    "alertsSent": 1,
+    "remindersSent": 0
+}
+{
+    "datetime": "2025-05-30T03:00:00.000Z",
+    "alertsSent": 1,
+    "remindersSent": 0,
+    "actions": [
+        {
+            "type": "alert",
+            "user_id": 1,
+            "user_name": "john dimm",
+            "user_email": "john.r.dimm@gmail.com",
+            "timezone": "America/Los_Angeles",
+            "caregiver_email": "jdimm@yahoo.com",
+            "interval": 2,
+            "interval_end": "2025-05-29T20:00:00.000-07:00",
+            "datetime": "2025-05-30T03:00:00.000Z"
+        }
+    ]
+}
+{
+    "datetime": "2025-05-30T03:00:00.000Z",
+    "alertsSent": 1,
+    "remindersSent": 0,
+    "actions": [
+        {
+            "type": "alert",
+            "user_id": 1,
+            "user_name": "john dimm",
+            "user_email": "john.r.dimm@gmail.com",
+            "timezone": "America/Los_Angeles",
+            "caregiver_email": "jdimm@yahoo.com",
+            "interval": 2,
+            "interval_end": "2025-05-29T20:00:00.000-07:00",
+            "datetime": "2025-05-30T03:00:00.000Z",
+            "localDatetime": "2025-05-29T20:00:00.000-07:00"
+        }
+    ]
+}
+{
+    "datetime": "2025-05-30T02:00:00.000Z",
+    "alertsSent": 0,
+    "remindersSent": 1,
+    "actions": [
+        {
+            "type": "reminder",
+            "user_id": 1,
+            "user_name": "john dimm",
+            "user_email": "john.r.dimm@gmail.com",
+            "timezone": "America/Los_Angeles",
+            "caregiver_email": "jdimm@yahoo.com",
+            "interval": 2,
+            "interval_end": "2025-05-29T20:00:00.000-07:00",
+            "datetime": "2025-05-30T02:00:00.000Z",
+            "localDatetime": "2025-05-29T19:00:00.000-07:00"
+        }
+    ]
+}

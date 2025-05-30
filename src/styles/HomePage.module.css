@@ -1,0 +1,52 @@
+.container {
+  max-width: 480px;
+  margin: 60px auto;
+  padding: 32px 24px;
+  background: #fff;
+  border-radius: 18px;
+  box-shadow: 0 4px 32px rgba(0,0,0,0.08);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.profileImage {
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  margin-bottom: 18px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+}
+.userInfo {
+  text-align: center;
+  margin-bottom: 18px;
+}
+.navLinks {
+  display: flex;
+  gap: 18px;
+  margin-bottom: 18px;
+}
+.navLink {
+  color: #2a5bd7;
+  text-decoration: none;
+  font-weight: 500;
+  padding: 6px 16px;
+  border-radius: 8px;
+  transition: background 0.15s;
+}
+.navLink:hover {
+  background: #f0f4ff;
+}
+.signOutBtn {
+  margin-top: 10px;
+  background: #e53e3e;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 8px 20px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.signOutBtn:hover {
+  background: #c53030;
+} 
