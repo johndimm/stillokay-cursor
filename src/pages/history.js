@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import historyStyles from "@/styles/HistoryPage.module.css";
 import Link from "next/link";
 import { DateTime } from "luxon";
+import homeStyles from "@/styles/HomePage.module.css";
 
 function formatEvent(event) {
   const { event_type, event_data, created_at } = event;
@@ -103,7 +104,7 @@ export default function History() {
       <div style={{ maxWidth: 420, margin: '0 auto 24px auto', background: '#fff', borderRadius: 12, boxShadow: '0 2px 8px #eee', padding: 16 }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
           <button onClick={() => setCalendarMonth(calendarMonth.minus({ months: 1 }))} style={{ background: 'none', border: 'none', fontSize: 20, cursor: 'pointer', color: '#2a5bd7' }}>&lt;</button>
-          <span style={{ fontWeight: 600, fontSize: 18 }}>{calendarMonth.toFormat('MMMM yyyy')}</span>
+          <span className={historyStyles.calendarMonth}>{calendarMonth.toFormat('MMMM yyyy')}</span>
           <button onClick={() => setCalendarMonth(calendarMonth.plus({ months: 1 }))} style={{ background: 'none', border: 'none', fontSize: 20, cursor: 'pointer', color: '#2a5bd7' }}>&gt;</button>
         </div>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 2, textAlign: 'center', fontWeight: 500, color: '#2a5bd7', marginBottom: 4 }}>
@@ -257,6 +258,9 @@ export default function History() {
           </li>
         ))}
       </ul>
+      <div className={homeStyles.userInfo}>
+        <p>Signed in as {session.user.name} ({session.user.email})</p>
+      </div>
     </div>
   );
 } 
