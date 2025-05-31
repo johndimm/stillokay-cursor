@@ -176,7 +176,7 @@ export default function History() {
         </div>
         {/* Inline event list for selected day */}
         {selectedDay && eventsByDay[selectedDay] && (
-          <div style={{ marginTop: 10, background: '#f8faff', borderRadius: 8, padding: 10, boxShadow: '0 1px 4px #e0eaff', border: '1.5px solid #e3f0ff' }}>
+          <div style={{ marginTop: 10, background: '#f8faff', borderRadius: 8, padding: 10, boxShadow: '0 1px 4px #e0eaff', border: '1.5px solid #e3f0ff', color: '#222' }}>
             <div style={{ fontWeight: 600, color: '#2a5bd7', marginBottom: 4 }}>{DateTime.fromISO(selectedDay).toLocaleString(DateTime.DATE_FULL)}</div>
             <ul style={{ margin: 0, padding: 0, listStyle: 'none' }}>
               {eventsByDay[selectedDay].map((event, i) => (
