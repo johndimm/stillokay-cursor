@@ -54,4 +54,22 @@
 .eventTime {
   font-size: 13px;
   color: #888;
+}
+.title {
+  color: #2a5bd7;
+  font-weight: 700;
+  font-size: 2rem;
+  margin-bottom: 18px;
+  text-align: center;
+}
+@media (max-width: 600px) {
+  .title {
+    font-size: 1.3rem;
+  }
+}
+.eventType {
+  color: #222;
+}
+.eventTime {
+  color: #666;
 } 

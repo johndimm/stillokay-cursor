@@ -95,7 +95,7 @@ export default function Settings() {
       <div className={settingsStyles.backLink}>
         <Link href="/" style={{ color: '#2a5bd7', fontWeight: 700, fontSize: 20, fontFamily: 'Geist, Arial, sans-serif', letterSpacing: '0.01em', textDecoration: 'none', display: 'inline-block', padding: '2px 0' }}>&larr; Still Okay Home</Link>
       </div>
-      <div className={settingsStyles.header}>Settings</div>
+      <h1 className={settingsStyles.title}>Settings</h1>
       <div className={settingsStyles.profile}>
         {showImage && (
           <img src={session.user.image} alt={session.user.name} className={settingsStyles.profileImage} />

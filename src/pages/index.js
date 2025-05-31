@@ -91,9 +91,11 @@ export default function Home() {
       setIntervalStart(data.intervalStart);
       setIntervalEnd(data.intervalEnd);
       setIntervalHours(data.intervalHours);
-      if (data.checkedIn && data.nextIntervalStart) {
+      // Always set a timer to refresh at the next interval boundary
+      if (data.nextIntervalStart) {
         const ms = DateTime.fromISO(data.nextIntervalStart).toMillis() - DateTime.now().toMillis();
         if (ms > 0) {
+          if (timerId) clearTimeout(timerId);
           const id = setTimeout(() => fetchCheckinStatus(), ms + 1000);
           setTimerId(id);
         }
@@ -101,17 +103,18 @@ export default function Home() {
     }
   }
 
+  async function fetchHistory() {
+    setLoadingEvents(true);
+    const res = await fetch("/api/history");
+    if (res.ok) {
+      const data = await res.json();
+      setEvents((data.events || []).map(e => ({ ...e, event_data: e.event_data || {} })).slice(0, 5));
+    }
+    setLoadingEvents(false);
+  }
+
   useEffect(() => {
     fetchCheckinStatus();
-    async function fetchHistory() {
-      setLoadingEvents(true);
-      const res = await fetch("/api/history");
-      if (res.ok) {
-        const data = await res.json();
-        setEvents((data.events || []).map(e => ({ ...e, event_data: e.event_data || {} })).slice(0, 5));
-      }
-      setLoadingEvents(false);
-    }
     fetchHistory();
     return () => { if (timerId) clearTimeout(timerId); };
     // eslint-disable-next-line
@@ -131,6 +134,7 @@ export default function Home() {
       const res = await fetch('/api/checkin', { method: 'POST' });
       if (res.ok) {
         await fetchCheckinStatus();
+        await fetchHistory();
       }
     } finally {
       setCheckingIn(false);
@@ -148,7 +152,36 @@ export default function Home() {
       <div className={`${styles.page} ${geistSans.variable} ${geistMono.variable} ${homeStyles.container}`}>
         <main className={styles.main}>
           {!session ? (
-            <button onClick={() => signIn("google")}>Sign in with Google</button>
+            <button
+              onClick={() => signIn("google")}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 14,
+                background: '#fff',
+                color: '#444',
+                fontWeight: 600,
+                fontSize: 18,
+                border: '1.5px solid #dadce0',
+                borderRadius: 12,
+                boxShadow: '0 2px 8px #f3f3f3',
+                padding: '16px 36px 16px 24px',
+                cursor: 'pointer',
+                transition: 'box-shadow 0.15s, border 0.15s, background 0.15s',
+                outline: 'none',
+                marginTop: 64,
+                marginBottom: 32,
+                letterSpacing: '0.01em',
+                position: 'relative',
+              }}
+              onMouseOver={e => e.currentTarget.style.boxShadow = '0 4px 16px #e0e0e0'}
+              onMouseOut={e => e.currentTarget.style.boxShadow = '0 2px 8px #f3f3f3'}
+            >
+              <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#fff', borderRadius: '50%', width: 28, height: 28, boxShadow: '0 1px 2px #eee', marginRight: 2 }}>
+                <svg width="22" height="22" viewBox="0 0 48 48"><g><path fill="#4285F4" d="M44.5 20H24v8.5h11.7C34.7 33.9 29.8 37 24 37c-7.2 0-13-5.8-13-13s5.8-13 13-13c3.1 0 5.9 1.1 8.1 2.9l6.4-6.4C34.5 4.5 29.6 2 24 2 12.9 2 4 10.9 4 22s8.9 20 20 20c11 0 19.7-8 19.7-20 0-1.3-.1-2.7-.2-4z"/><path fill="#34A853" d="M6.3 14.7l7 5.1C15.2 16.2 19.2 13 24 13c3.1 0 5.9 1.1 8.1 2.9l6.4-6.4C34.5 4.5 29.6 2 24 2 15.3 2 7.8 7.7 6.3 14.7z"/><path fill="#FBBC05" d="M24 44c5.6 0 10.5-1.8 14.3-4.9l-6.6-5.4C29.8 37 24 37 24 37c-5.8 0-10.7-3.1-13.2-7.6l-7 5.4C7.8 40.3 15.3 44 24 44z"/><path fill="#EA4335" d="M44.5 20H24v8.5h11.7c-1.6 4.1-6.1 8.5-11.7 8.5-7.2 0-13-5.8-13-13s5.8-13 13-13c3.1 0 5.9 1.1 8.1 2.9l6.4-6.4C34.5 4.5 29.6 2 24 2 12.9 2 4 10.9 4 22s8.9 20 20 20c11 0 19.7-8 19.7-20 0-1.3-.1-2.7-.2-4z"/></g></svg>
+              </span>
+              Sign in with Google
+            </button>
           ) : (
             <div style={{ width: "100%", display: "flex", flexDirection: "column", alignItems: "center" }}>
               <button
@@ -196,7 +229,12 @@ export default function Home() {
                     if (next.hasSame(now, 'day')) {
                       return <>Checked in! You can check in again at {next.toLocaleString(DateTime.TIME_SIMPLE)}</>;
                     } else {
-                      return <>Checked in! You can check in again at {next.toLocaleString(DateTime.DATETIME_MED)}</>;
+                      // If next is this year, omit the year
+                      const showYear = next.year !== now.year;
+                      const dateOpts = showYear
+                        ? DateTime.DATETIME_MED
+                        : { month: 'long', day: 'numeric', hour: 'numeric', minute: '2-digit' };
+                      return <>Checked in! You can check in again at {next.toLocaleString(dateOpts)}</>;
                     }
                   })()}
                 </div>
@@ -375,8 +413,14 @@ export default function Home() {
                           <div className={historyStyles.eventTime}>{
                             (() => {
                               const dt = DateTime.fromISO(event.created_at);
-                              // Show date and time, no seconds
-                              return dt.toLocaleString(DateTime.DATETIME_MED);
+                              const now = DateTime.now().setZone(dt.zoneName);
+                              if (dt.year === now.year) {
+                                // Show date and time, no year
+                                return dt.toLocaleString({ month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
+                              } else {
+                                // Show full date and time with year
+                                return dt.toLocaleString(DateTime.DATETIME_MED);
+                              }
                             })()
                           }</div>
                         </div>
