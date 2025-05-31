@@ -375,7 +375,7 @@ export default function Home() {
               )}
               {/* Timeline */}
               <div style={{ width: '100%', maxWidth: 480, margin: '0 auto 24px auto' }}>
-                <div className={historyStyles.header} style={{ fontSize: '1.2rem', margin: '16px 0 12px 0' }}>Recent Activity</div>
+                <div className={homeStyles.recentActivityHeader}>Recent Activity</div>
                 {loadingEvents ? <Spinner /> : (
                   <ul className={historyStyles.timeline}>
                     {events.length === 0 && <li>No events yet.</li>}
