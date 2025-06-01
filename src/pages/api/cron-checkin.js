@@ -35,6 +35,11 @@ async function sendCaregiverAlert({ client, user, prevIntervalEnd, timezone, now
     'INSERT INTO history (user_id, event_type, event_data) VALUES ($1, $2, $3)',
     [user_id, 'caregiver_alert_email_sent', JSON.stringify({ caregiver_email, interval_end: prevIntervalEnd.toISO() })]
   );
+  // Log event: user_alert_email_sent
+  await client.query(
+    'INSERT INTO history (user_id, event_type, event_data) VALUES ($1, $2, $3)',
+    [user_id, 'user_alert_email_sent', JSON.stringify({ user_email, sent_at: new Date().toISOString() })]
+  );
   actions.push({
     type: 'alert',
     user_id, user_name, user_email, timezone, caregiver_email, interval,

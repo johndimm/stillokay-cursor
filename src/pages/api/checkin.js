@@ -52,8 +52,33 @@ export default async function handler(req, res) {
       'INSERT INTO history (user_id, event_type, event_data) VALUES ($1, $2, $3)',
       [userId, 'checkin', JSON.stringify({})]
     );
+    // Check if previous interval was missed
+    const prevIntervalStart = intervalStart.minus({ hours: interval });
+    const prevIntervalEnd = intervalStart;
+    const prevMissedResult = await client.query(
+      `SELECT 1 FROM history WHERE user_id = $1 AND event_type = 'missed_checkin' AND event_data->>'interval_end' = $2`,
+      [userId, prevIntervalEnd.toUTC().toISO()]
+    );
+    let sentImOk = false;
+    if (prevMissedResult.rows.length > 0 && caregiverEmail) {
+      // Send 'I'm okay' email to caregiver
+      await sendEmail({
+        to: caregiverEmail,
+        subject: `Still Okay: ${session.user.name} checked in after missed interval`,
+        html: `<p>Hello${caregiverName ? ' ' + caregiverName : ''},</p>
+               <p><b>${session.user.name}</b> just checked in after missing their last interval.</p>
+               <p>This means they are okay now. No further action is needed.</p>
+               <p style="color:#888;font-size:13px;">You are receiving this because you are listed as a caregiver in Still Okay.</p>`
+      });
+      // Log event: caregiver_im_ok_email_sent
+      await client.query(
+        'INSERT INTO history (user_id, event_type, event_data) VALUES ($1, $2, $3)',
+        [userId, 'caregiver_im_ok_email_sent', JSON.stringify({ caregiver_email: caregiverEmail, sent_at: new Date().toISOString() })]
+      );
+      sentImOk = true;
+    }
     // Send email to caregiver if enabled
-    if (sendCheckinEmail && caregiverEmail) {
+    if (sendCheckinEmail && caregiverEmail && !sentImOk) {
       await sendEmail({
         to: caregiverEmail,
         subject: `Still Okay: ${session.user.name} checked in`,
@@ -61,6 +86,14 @@ export default async function handler(req, res) {
                <p><b>${session.user.name}</b> just checked in using Still Okay.</p>
                <p>No action is needed. This is just a notification for your peace of mind.</p>
                <p style="color:#888;font-size:13px;">You are receiving this because you are listed as a caregiver in Still Okay.</p>`
+      });
+      // Log event: caregiver_checkin_email_sent
+      await pool.connect().then(async client => {
+        await client.query(
+          'INSERT INTO history (user_id, event_type, event_data) VALUES ($1, $2, $3)',
+          [userId, 'caregiver_checkin_email_sent', JSON.stringify({ caregiver_email: caregiverEmail, sent_at: new Date().toISOString() })]
+        );
+        client.release();
       });
     }
     client.release();

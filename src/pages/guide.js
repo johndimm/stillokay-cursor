@@ -15,14 +15,19 @@ export default function Guide() {
         <li>Go to <b>Settings</b> and enter your caregiver's name and email.</li>
         <li>Select how often you want to check in (every 2, 4, 6, 8, 10, or 24 hours).</li>
         <li>Choose your timezone (defaults to America/Los_Angeles).</li>
+        <li>Optionally, enable "Send email to caregiver when I check in" if you want your caregiver to be notified every time you check in.</li>
         <li>Your caregiver will receive a confirmation email and must opt in.</li>
       </ol>
       <h2 style={{ fontSize: '1.3rem', marginTop: 24, color: '#2a5bd7' }}>How Check-Ins Work</h2>
       <ul style={{ marginLeft: 20 }}>
         <li>On the Home page, click the big <b>Still Okay</b> button to check in.</li>
-        <li>You can only check in once per interval (e.g., once every 2 hours).</li>
+        <li>You can only check in once per interval (e.g., once every 24 hours, or whatever interval you set).</li>
         <li>If you don't check in by the end of your interval, your caregiver will be notified.</li>
+        <li>If your caregiver is alerted about a missed check-in, you will also receive an email letting you know your caregiver has been notified.</li>
+        <li>If you check in after missing an interval (and your caregiver was alerted), your caregiver will be notified right away that you are okay, even if you don't have the regular check-in notification enabled.</li>
         <li>One hour before your interval ends, you'll get a reminder email if you haven't checked in yet.</li>
+        <li>If you enabled the setting, your caregiver will get an email every time you check in.</li>
+        <li>All significant emails and events (check-ins, reminders, alerts, notifications) are logged in your History for your records.</li>
       </ul>
       <h2 style={{ fontSize: '1.3rem', marginTop: 24, color: '#2a5bd7' }}>What Does the Caregiver Do?</h2>
       <ul style={{ marginLeft: 20 }}>
