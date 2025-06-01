@@ -15,6 +15,16 @@ async function sendCaregiverAlert({ client, user, prevIntervalEnd, timezone, now
            <p><b>${user_name}</b> did not check in during their interval ending at ${prevIntervalEnd.toFormat('ff')} (${timezone}).</p>
            <p>This is an automated alert from Still Okay.</p>`
   });
+  // Send alert email to user
+  await sendEmail({
+    to: user_email,
+    subject: `Still Okay: Your caregiver has been alerted`,
+    html: `<p>Hello ${user_name},</p>
+           <p>You missed your check-in for the interval ending at <b>${prevIntervalEnd.toFormat('ff')} (${timezone})</b>.</p>
+           <p>Your caregiver (${caregiver_name || caregiver_email}) has been notified to check in on you.</p>
+           <p>If this was a mistake, just check in as soon as possible.</p>
+           <p style="color:#888;font-size:13px;">This is an automated message from Still Okay.</p>`
+  });
   // Log event: missed_checkin
   await client.query(
     'INSERT INTO history (user_id, event_type, event_data) VALUES ($1, $2, $3)',

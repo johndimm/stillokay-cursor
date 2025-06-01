@@ -24,7 +24,7 @@ export default async function handler(req, res) {
       const userId = userResult.rows[0].id;
       const userName = userResult.rows[0].name;
       const userTimezone = userResult.rows[0].timezone || "America/Los_Angeles";
-      const cgResult = await client.query('SELECT name, email, email_confirmed, interval FROM caregivers WHERE user_id = $1', [userId]);
+      const cgResult = await client.query('SELECT name, email, email_confirmed, interval, send_checkin_email FROM caregivers WHERE user_id = $1', [userId]);
       let caregiver = cgResult.rows[0] || {};
       client.release();
       res.json({
@@ -33,13 +33,14 @@ export default async function handler(req, res) {
         interval: caregiver.interval || 24,
         email_confirmed: caregiver.email_confirmed || false,
         timezone: userTimezone,
+        send_checkin_email: caregiver.send_checkin_email || false
       });
     } catch (err) {
       console.error(err);
       res.status(500).json({ error: "Database error" });
     }
   } else if (req.method === "POST") {
-    const { caregiver_name, caregiver_email, interval, timezone } = req.body;
+    const { caregiver_name, caregiver_email, interval, timezone, send_checkin_email } = req.body;
     try {
       const client = await pool.connect();
       const userResult = await client.query('SELECT id, name FROM users WHERE email = $1', [userEmail]);
@@ -61,9 +62,8 @@ export default async function handler(req, res) {
         token = crypto.randomBytes(32).toString('hex');
       }
       await client.query(
-        `INSERT INTO caregivers (user_id, name, email, interval, email_confirmed, token) VALUES ($1, $2, $3, $4, $5, $6)
-         ON CONFLICT (user_id) DO UPDATE SET name = $2, email = $3, interval = $4, email_confirmed = $5, token = $6`,
-        [userId, caregiver_name, caregiver_email, interval, prevEmail !== caregiver_email ? false : true, token || null]
+        'UPDATE caregivers SET name = $1, email = $2, interval = $3, send_checkin_email = $4 WHERE user_id = $5',
+        [caregiver_name, caregiver_email, interval, !!send_checkin_email, userId]
       );
       // If caregiver email changed, send confirmation/intro email
       if (prevEmail !== caregiver_email && caregiver_email) {

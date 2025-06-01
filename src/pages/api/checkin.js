@@ -2,6 +2,7 @@ import { getServerSession } from "next-auth/next";
 import { authOptions } from "./auth/[...nextauth]";
 import { Pool } from "pg";
 import { DateTime } from "luxon";
+import { sendEmail } from "./sendEmail";
 
 const pool = new Pool({ connectionString: process.env.DATABASE_URL });
 
@@ -25,8 +26,11 @@ export default async function handler(req, res) {
     const userId = userResult.rows[0].id;
     const timezone = userResult.rows[0].timezone || "America/Los_Angeles";
     // Get interval from caregivers table (assume one caregiver per user)
-    const cgResult = await client.query('SELECT interval FROM caregivers WHERE user_id = $1', [userId]);
+    const cgResult = await client.query('SELECT name, email, interval, send_checkin_email FROM caregivers WHERE user_id = $1', [userId]);
     const interval = cgResult.rows[0]?.interval || 24;
+    const caregiverEmail = cgResult.rows[0]?.email;
+    const caregiverName = cgResult.rows[0]?.name;
+    const sendCheckinEmail = cgResult.rows[0]?.send_checkin_email;
     // Calculate current interval start and end in user's local time
     const now = DateTime.now().setZone(timezone);
     const intervalStartHour = Math.floor(now.hour / interval) * interval;
@@ -48,6 +52,17 @@ export default async function handler(req, res) {
       'INSERT INTO history (user_id, event_type, event_data) VALUES ($1, $2, $3)',
       [userId, 'checkin', JSON.stringify({})]
     );
+    // Send email to caregiver if enabled
+    if (sendCheckinEmail && caregiverEmail) {
+      await sendEmail({
+        to: caregiverEmail,
+        subject: `Still Okay: ${session.user.name} checked in`,
+        html: `<p>Hello${caregiverName ? ' ' + caregiverName : ''},</p>
+               <p><b>${session.user.name}</b> just checked in using Still Okay.</p>
+               <p>No action is needed. This is just a notification for your peace of mind.</p>
+               <p style="color:#888;font-size:13px;">You are receiving this because you are listed as a caregiver in Still Okay.</p>`
+      });
+    }
     client.release();
     res.json({ success: true });
   } catch (err) {

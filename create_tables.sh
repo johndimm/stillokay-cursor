@@ -16,7 +16,8 @@ CREATE TABLE IF NOT EXISTS caregivers (
   email_confirmed BOOLEAN DEFAULT FALSE,
   opted_in BOOLEAN DEFAULT FALSE,
   interval INTEGER DEFAULT 24,
-  token TEXT
+  token TEXT,
+  send_checkin_email BOOLEAN DEFAULT FALSE
 );
 
 CREATE TABLE IF NOT EXISTS history (
@@ -28,4 +29,7 @@ CREATE TABLE IF NOT EXISTS history (
 );
 
 \dt
-EOF 
+
+-- Add column if upgrading an existing table
+ALTER TABLE caregivers ADD COLUMN IF NOT EXISTS send_checkin_email BOOLEAN DEFAULT FALSE;
+EOF

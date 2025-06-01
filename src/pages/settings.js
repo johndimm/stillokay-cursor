@@ -46,6 +46,7 @@ export default function Settings() {
   const [loading, setLoading] = useState(true);
   const [showImage, setShowImage] = useState(false);
   const [timezone, setTimezone] = useState("America/Los_Angeles");
+  const [sendCheckinEmail, setSendCheckinEmail] = useState(false);
 
   useEffect(() => {
     // Only show image if not already shown in this session
@@ -66,6 +67,7 @@ export default function Settings() {
         setInterval(data.interval || 24);
         setEmailConfirmed(!!data.email_confirmed);
         setTimezone(data.timezone || "America/Los_Angeles");
+        setSendCheckinEmail(!!data.send_checkin_email);
       }
       setLoading(false);
     }
@@ -78,7 +80,7 @@ export default function Settings() {
     const res = await fetch("/api/settings", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ caregiver_name: caregiverName, caregiver_email: caregiverEmail, interval, timezone }),
+      body: JSON.stringify({ caregiver_name: caregiverName, caregiver_email: caregiverEmail, interval, timezone, send_checkin_email: sendCheckinEmail }),
     });
     if (res.ok) {
       setStatus("Saved!");
@@ -135,6 +137,12 @@ export default function Settings() {
                 <option key={tz} value={tz}>{tz.replace('_', ' ')}</option>
               ))}
             </select>
+          </label>
+        </div>
+        <div className={settingsStyles.formGroup}>
+          <label className={settingsStyles.label}>
+            <input type="checkbox" checked={sendCheckinEmail} onChange={e => setSendCheckinEmail(e.target.checked)} style={{ marginRight: 8 }} />
+            Send email to caregiver when I check in
           </label>
         </div>
         <button type="submit" className={settingsStyles.saveBtn}>Save</button>
