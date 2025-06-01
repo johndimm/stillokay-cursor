@@ -40,6 +40,15 @@ export default function Guide() {
       <div style={{ marginTop: 36, textAlign: 'center' }}>
         <Link href="/" style={{ color: '#2a5bd7', fontWeight: 600, fontSize: 16, fontFamily: 'Geist, Arial, sans-serif', letterSpacing: '0.01em', textDecoration: 'none', display: 'inline-block', padding: '2px 0' }}>&larr; Still Okay Home</Link>
       </div>
+      <div style={{ marginTop: 48, borderTop: '1px solid #e0e0e0', paddingTop: 24 }}>
+        <h2 style={{ fontSize: '1.1rem', color: '#2a5bd7', marginBottom: 8 }}>Credits</h2>
+        <ul style={{ color: '#222', fontSize: '1rem', listStyle: 'none', padding: 0, margin: 0 }}>
+          <li>Concept by <b>Neola Mace</b></li>
+          <li>Code 100% by <b>Cursor</b></li>
+          <li>Prompts by <b>John Dimm</b></li>
+          <li>GitHub: <a href="https://github.com/johndimm/stillokay-cursor" style={{ color: '#2a5bd7', textDecoration: 'underline' }}>https://github.com/johndimm/stillokay-cursor</a></li>
+        </ul>
+      </div>
     </div>
   );
 } 
