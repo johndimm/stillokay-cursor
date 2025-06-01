@@ -24,6 +24,8 @@ function formatEvent(event) {
     desc = `Alert email sent to caregiver`;
   } else if (event_type === "reminder_email_sent") {
     desc = `Reminder email sent to user`;
+  } else if (event_type === "caregiver_checkin_email_sent") {
+    desc = `Caregiver notified: user checked in`;
   } else {
     desc = event_type;
   }
