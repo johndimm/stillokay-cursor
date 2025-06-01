@@ -37,7 +37,7 @@ export default function Guide() {
       </ul>
       <h2 style={{ fontSize: '1.3rem', marginTop: 24, color: '#2a5bd7' }}>Frequently Asked Questions</h2>
       <ul style={{ marginLeft: 20 }}>
-        <li><b>What if I check in late?</b> — You can only check in once per interval. If you miss the window, your caregiver will be notified.</li>
+        <li><b>What if I check in late?</b> — You can only check in once per interval. If you miss the window, your caregiver will be notified. However, you can immediately check in for the next interval, and your caregiver will be notified right away that you are okay.</li>
         <li><b>Can I change my caregiver?</b> — Yes! Update their info in <b>Settings</b>. They'll get a new confirmation email.</li>
         <li><b>What if my caregiver doesn't confirm?</b> — No alerts will be sent until your caregiver confirms and opts in.</li>
         <li><b>Is my data private?</b> — Yes. Your info is only used for check-ins and notifications.</li>
