@@ -38,6 +38,8 @@ function formatEvent(event) {
     desc = `Alert email sent to caregiver`;
   } else if (event_type === "reminder_email_sent") {
     desc = `Reminder email sent to user`;
+  } else if (event_type === "caregiver_checkin_email_sent") {
+    desc = "Caregiver notified: user checked in";
   } else {
     desc = event_type;
   }
@@ -297,6 +299,7 @@ export default function Home() {
                       }
                       // Not checked in: single bar, use current interval
                       let singleMarker = null;
+                      let reminderMarker = null;
                       if (!checkedIn) {
                         const start = prevStart;
                         const end = prevEnd;
@@ -318,6 +321,32 @@ export default function Home() {
                             )}
                           </div>
                         );
+                        // Reminder marker (bell)
+                        const reminderTime = end.minus({ hours: 1 });
+                        if (reminderTime > start && reminderTime < end) {
+                          let reminderPct = ((reminderTime.toMillis() - start.toMillis()) / totalMs) * 100;
+                          reminderPct = Math.max(0, Math.min(100, reminderPct));
+                          reminderMarker = (
+                            <div
+                              style={{ position: 'absolute', left: `${reminderPct}%`, top: 0, height: '100%', width: 0, zIndex: 3 }}
+                              onMouseEnter={() => setShowReminderTooltip(true)}
+                              onMouseLeave={() => setShowReminderTooltip(false)}
+                            >
+                              <div style={{ position: 'absolute', left: -10, top: 2, height: 28, width: 20, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                {/* Solid Bell SVG */}
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="#ff9800" style={{ display: 'block' }}>
+                                  <path d="M12 22c1.1 0 2-.9 2-2h-4a2 2 0 0 0 2 2zm6-6V11c0-3.07-1.63-5.64-4.5-6.32V4a1.5 1.5 0 0 0-3 0v.68C7.63 5.36 6 7.92 6 11v5l-1.29 1.29A1 1 0 0 0 6 19h12a1 1 0 0 0 .71-1.71L18 16z" />
+                                </svg>
+                              </div>
+                              {showReminderTooltip && (
+                                <div style={{ position: 'absolute', left: '50%', transform: 'translateX(-50%)', bottom: 32, minWidth: 120, maxWidth: 220, background: '#fff', color: '#222', border: '1.5px solid #ff9800', borderRadius: 7, padding: '7px 12px', fontSize: 13, fontWeight: 500, boxShadow: '0 2px 8px #ddd', whiteSpace: 'normal', zIndex: 9999, textAlign: 'center', lineHeight: 1.4 }}>
+                                  <div>Reminder will be sent at:</div>
+                                  <div style={{ marginTop: 2, color: '#ff9800', fontSize: 14, fontWeight: 700 }}>{reminderTime.toLocaleString(DateTime.TIME_SIMPLE)}</div>
+                                </div>
+                              )}
+                            </div>
+                          );
+                        }
                       }
                       return (
                         <>
@@ -338,6 +367,7 @@ export default function Home() {
                               {/* Single bar: current interval */}
                               <div style={{ width: '100%', background: 'linear-gradient(90deg, #2a5bd7 60%, #5b8df7 100%)', height: '100%', position: 'relative' }}>
                                 {singleMarker}
+                                {reminderMarker}
                               </div>
                             </div>
                           )}
