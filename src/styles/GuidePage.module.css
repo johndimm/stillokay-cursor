@@ -1,0 +1,78 @@
+.container {
+  max-width: 700px;
+  margin: 60px auto;
+  background: #fff;
+  border-radius: 18px;
+  box-shadow: 0 4px 32px rgba(0,0,0,0.08);
+  padding: 36px 28px;
+  color: #222;
+}
+.markdown {
+  font-family: 'Geist', Arial, sans-serif;
+  font-size: 1.08rem;
+  line-height: 1.7;
+}
+.markdown h1 {
+  font-size: 2.2rem;
+  font-weight: 700;
+  color: #2a5bd7;
+  margin-top: 0;
+  margin-bottom: 10px;
+}
+.markdown h2 {
+  font-size: 1.3rem;
+  color: #2a5bd7;
+  font-weight: 600;
+  margin-top: 1.5em;
+  margin-bottom: 0.4em;
+}
+.markdown h3 {
+  font-size: 1.1rem;
+  color: #2a5bd7;
+  font-weight: 600;
+  margin-top: 1.2em;
+  margin-bottom: 0.3em;
+}
+.markdown ul, .markdown ol {
+  margin-left: 1.5em;
+  margin-bottom: 0.7em;
+}
+.markdown li {
+  margin-bottom: 0.2em;
+}
+.markdown strong, .markdown b {
+  color: #2a5bd7;
+}
+.markdown a {
+  color: #2a5bd7;
+  text-decoration: underline;
+  transition: color 0.15s;
+}
+.markdown a:hover {
+  color: #174ea6;
+}
+.markdown hr {
+  border: none;
+  border-top: 1.5px solid #e0e0e0;
+  margin: 2em 0 1.5em 0;
+}
+.markdown blockquote {
+  border-left: 4px solid #2a5bd7;
+  background: #f6f8fa;
+  color: #444;
+  padding: 0.5em 1em;
+  margin: 1em 0;
+  border-radius: 7px;
+}
+@media (max-width: 700px) {
+  .container {
+    padding: 18px 6vw;
+    margin: 24px 0;
+  }
+  .markdown h1 {
+    font-size: 1.4rem;
+  }
+  .markdown h2 {
+    font-size: 1.1rem;
+  }
+} 
