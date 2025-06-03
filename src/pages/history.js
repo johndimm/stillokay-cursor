@@ -4,32 +4,24 @@ import historyStyles from "@/styles/HistoryPage.module.css";
 import Link from "next/link";
 import { DateTime } from "luxon";
 import homeStyles from "@/styles/HomePage.module.css";
+import EventTimeline from "@/components/EventTimeline";
 
 function formatEvent(event) {
-  const { event_type, event_data, created_at } = event;
-  let desc = "";
-  if (event_type === "caregiver_email_sent") {
-    desc = `Confirmation email sent to ${event_data.caregiver_email}`;
-  } else if (event_type === "caregiver_updated") {
-    desc = `Caregiver info updated: ${event_data.caregiver_name} (${event_data.caregiver_email}), interval: ${event_data.interval}h`;
-  } else if (event_type === "caregiver_optin") {
-    desc = `Caregiver opted in`;
-  } else if (event_type === "caregiver_optout") {
-    desc = `Caregiver opted out`;
-  } else if (event_type === "checkin") {
-    desc = "Checked in";
-  } else if (event_type === "missed_checkin") {
-    desc = "Missed check-in: user did not check in during the interval.";
-  } else if (event_type === "caregiver_alert_email_sent") {
-    desc = `Alert email sent to caregiver`;
-  } else if (event_type === "reminder_email_sent") {
-    desc = `Reminder email sent to user`;
-  } else if (event_type === "caregiver_checkin_email_sent") {
-    desc = `Caregiver notified: user checked in`;
-  } else {
-    desc = event_type;
-  }
-  return `${desc}`;
+  const { event_type, event_data } = event;
+  const eventTypeDescriptions = {
+    caregiver_email_sent: e => `Confirmation email sent to ${e.caregiver_email}`,
+    caregiver_updated: e => `Caregiver info updated: ${e.caregiver_name} (${e.caregiver_email}), interval: ${e.interval}h`,
+    caregiver_optin: () => `Caregiver opted in`,
+    caregiver_optout: () => `Caregiver opted out`,
+    checkin: () => "Checked in",
+    missed_checkin: () => "Missed check-in: user did not check in during the interval.",
+    caregiver_alert_email_sent: () => `Alert email sent to caregiver`,
+    reminder_email_sent: () => `Reminder email sent to user`,
+    caregiver_checkin_email_sent: () => `Caregiver notified: user checked in`,
+    user_alert_email_sent: () => `Alert email sent to user`,
+  };
+  const descFn = eventTypeDescriptions[event_type];
+  return descFn ? descFn(event_data || {}) : event_type;
 }
 
 function Spinner() {
@@ -163,6 +155,7 @@ export default function History() {
                           ev.event_type === 'caregiver_updated' ? '#8e24aa' :
                           ev.event_type === 'caregiver_optin' ? '#009688' :
                           ev.event_type === 'caregiver_optout' ? '#757575' :
+                          ev.event_type === 'user_alert_email_sent' ? '#e53935' :
                           '#bdbdbd',
                         border: '2px solid #fff',
                         marginLeft: idx > 0 ? 0 : 0,
@@ -196,6 +189,7 @@ export default function History() {
                       event.event_type === 'caregiver_updated' ? '#8e24aa' :
                       event.event_type === 'caregiver_optin' ? '#009688' :
                       event.event_type === 'caregiver_optout' ? '#757575' :
+                      event.event_type === 'user_alert_email_sent' ? '#e53935' :
                       '#bdbdbd',
                     border: '2px solid #fff',
                     marginRight: 2,
@@ -211,55 +205,7 @@ export default function History() {
         )}
       </div>
       {/* Timeline List */}
-      <ul className={historyStyles.timeline}>
-        {events.length === 0 && <li>No events yet.</li>}
-        {events.map((event, i) => (
-          <li
-            key={i}
-            className={
-              historyStyles.event +
-              ' ' +
-              (historyStyles[event.event_type + 'Bg'] || historyStyles.eventBg)
-            }
-            style={{ display: 'flex', alignItems: 'center', gap: 12 }}
-          >
-            <span style={{
-              display: 'inline-block',
-              width: 14,
-              height: 14,
-              borderRadius: '50%',
-              marginRight: 8,
-              background:
-                event.event_type === 'checkin' ? '#43a047' :
-                event.event_type === 'reminder' ? '#ff9800' :
-                event.event_type === 'missed_checkin_alert' ? '#e53935' :
-                event.event_type === 'caregiver_email_sent' ? '#1976d2' :
-                event.event_type === 'caregiver_updated' ? '#8e24aa' :
-                event.event_type === 'caregiver_optin' ? '#009688' :
-                event.event_type === 'caregiver_optout' ? '#757575' :
-                '#bdbdbd',
-              border: '2px solid #fff',
-              boxShadow: '0 1px 4px #eee',
-            }} />
-            <div className={historyStyles.eventDetails}>
-              <div className={historyStyles.eventType}>{formatEvent(event)}</div>
-              <div className={historyStyles.eventTime}>{
-                (() => {
-                  const dt = DateTime.fromISO(event.created_at);
-                  const now = DateTime.now().setZone(dt.zoneName);
-                  if (dt.year === now.year) {
-                    // Show date and time, no year
-                    return dt.toLocaleString({ month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
-                  } else {
-                    // Show full date and time with year
-                    return dt.toLocaleString(DateTime.DATETIME_MED);
-                  }
-                })()
-              }</div>
-            </div>
-          </li>
-        ))}
-      </ul>
+      <EventTimeline events={events} formatEvent={formatEvent} />
       <div className={homeStyles.userInfo}>
         <p>Signed in as {session.user.name} ({session.user.email})</p>
       </div>

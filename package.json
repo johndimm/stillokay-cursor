@@ -10,11 +10,13 @@
   },
   "dependencies": {
     "luxon": "^3.6.1",
+    "marked": "^15.0.12",
     "next": "15.3.2",
     "next-auth": "^4.24.11",
     "nodemailer": "^6.10.1",
     "pg": "^8.16.0",
     "react": "^19.0.0",
-    "react-dom": "^19.0.0"
+    "react-dom": "^19.0.0",
+    "react-markdown": "^10.1.0"
   }
 }

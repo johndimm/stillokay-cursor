@@ -110,12 +110,16 @@ export default function Settings() {
       <form onSubmit={handleSave}>
         <div className={settingsStyles.formGroup}>
           <label className={settingsStyles.label}>Caregiver Name<br />
-            <input type="text" value={caregiverName} onChange={e => setCaregiverName(e.target.value)} className={settingsStyles.input} />
+            <input type="text" value={caregiverName} onChange={e => {
+              setCaregiverName(e.target.value);
+            }} className={settingsStyles.input} />
           </label>
         </div>
         <div className={settingsStyles.formGroup}>
           <label className={settingsStyles.label}>Caregiver Email<br />
-            <input type="email" value={caregiverEmail} onChange={e => setCaregiverEmail(e.target.value)} className={settingsStyles.input} />
+            <input type="email" value={caregiverEmail} onChange={e => {
+              setCaregiverEmail(e.target.value);
+            }} className={settingsStyles.input} />
           </label>
           <div className={settingsStyles.emailStatus}>
             {emailConfirmed ? 'Caregiver email confirmed' : 'Caregiver email not confirmed'}
@@ -123,7 +127,9 @@ export default function Settings() {
         </div>
         <div className={settingsStyles.formGroup}>
           <label className={settingsStyles.label}>Check-in Interval<br />
-            <select value={interval} onChange={e => setInterval(Number(e.target.value))} className={settingsStyles.select}>
+            <select value={interval} onChange={e => {
+              setInterval(Number(e.target.value));
+            }} className={settingsStyles.select}>
               {INTERVAL_OPTIONS.map(opt => (
                 <option key={opt} value={opt}>{opt} hours</option>
               ))}
@@ -132,7 +138,9 @@ export default function Settings() {
         </div>
         <div className={settingsStyles.formGroup}>
           <label className={settingsStyles.label}>Timezone<br />
-            <select value={timezone} onChange={e => setTimezone(e.target.value)} className={settingsStyles.select}>
+            <select value={timezone} onChange={e => {
+              setTimezone(e.target.value);
+            }} className={settingsStyles.select}>
               {TIMEZONE_OPTIONS.map(tz => (
                 <option key={tz} value={tz}>{tz.replace('_', ' ')}</option>
               ))}
@@ -141,7 +149,9 @@ export default function Settings() {
         </div>
         <div className={settingsStyles.formGroup}>
           <label className={settingsStyles.label}>
-            <input type="checkbox" checked={sendCheckinEmail} onChange={e => setSendCheckinEmail(e.target.checked)} style={{ marginRight: 8 }} />
+            <input type="checkbox" checked={sendCheckinEmail} onChange={e => {
+              setSendCheckinEmail(e.target.checked);
+            }} style={{ marginRight: 8 }} />
             Send email to caregiver when I check in
           </label>
         </div>
