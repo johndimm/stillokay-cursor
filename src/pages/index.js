@@ -83,12 +83,18 @@ function IntervalTimelineBar({
   if (checkedIn && now >= prevStart && now <= prevEnd) {
     const totalMs = prevEnd.toMillis() - prevStart.toMillis();
     let nowPct = ((now.toMillis() - prevStart.toMillis()) / totalMs) * 100;
+    // Helper to toggle tooltip on click
+    function handleNowMarkerClick(e) {
+      e.stopPropagation();
+      setShowNowTooltip(v => !v);
+    }
     leftMarker = (
       <div
         className={homeStyles.timelineMarker}
         style={{ left: `${nowPct}%` }}
         onMouseEnter={() => { setShowNowTooltip(true); }}
         onMouseLeave={() => setShowNowTooltip(false)}
+        onClick={handleNowMarkerClick}
       >
         <div className={homeStyles.timelineMarkerBar} />
         {showNowTooltip && (
@@ -104,12 +110,18 @@ function IntervalTimelineBar({
   if (checkedIn && now >= nextStart && now <= nextEnd) {
     const totalMs = nextEnd.toMillis() - nextStart.toMillis();
     let nowPct = ((now.toMillis() - nextStart.toMillis()) / totalMs) * 100;
+    // Helper to toggle tooltip on click
+    function handleNowMarkerClick(e) {
+      e.stopPropagation();
+      setShowNowTooltip(v => !v);
+    }
     rightMarker = (
       <div
         className={homeStyles.timelineMarker}
         style={{ left: `${nowPct}%` }}
         onMouseEnter={() => { setShowNowTooltip(true); }}
         onMouseLeave={() => setShowNowTooltip(false)}
+        onClick={handleNowMarkerClick}
       >
         <div className={homeStyles.timelineMarkerBar} />
         {showNowTooltip && (
@@ -128,12 +140,18 @@ function IntervalTimelineBar({
     const totalMs = end.toMillis() - start.toMillis();
     let nowPct = ((now.toMillis() - start.toMillis()) / totalMs) * 100;
     nowPct = Math.max(0, Math.min(100, nowPct));
+    // Helper to toggle tooltip on click
+    function handleNowMarkerClick(e) {
+      e.stopPropagation();
+      setShowNowTooltip(v => !v);
+    }
     singleMarker = (
       <div
         className={homeStyles.timelineMarker}
         style={{ left: `${nowPct}%` }}
         onMouseEnter={() => { setShowNowTooltip(true); }}
         onMouseLeave={() => setShowNowTooltip(false)}
+        onClick={handleNowMarkerClick}
       >
         <div className={homeStyles.timelineMarkerBar} />
         {showNowTooltip && (
@@ -149,12 +167,18 @@ function IntervalTimelineBar({
     if (reminderTime > start && reminderTime < end) {
       let reminderPct = ((reminderTime.toMillis() - start.toMillis()) / totalMs) * 100;
       reminderPct = Math.max(0, Math.min(100, reminderPct));
+      // Helper to toggle tooltip on click
+      function handleReminderMarkerClick(e) {
+        e.stopPropagation();
+        setShowReminderTooltip(v => !v);
+      }
       reminderMarker = (
         <div
           className={homeStyles.timelineMarker}
           style={{ left: `${reminderPct}%`, zIndex: 3 }}
           onMouseEnter={() => setShowReminderTooltip(true)}
           onMouseLeave={() => setShowReminderTooltip(false)}
+          onClick={handleReminderMarkerClick}
         >
           <div style={{ position: 'absolute', left: -10, top: 2, height: 28, width: 20, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             {/* Solid Bell SVG */}
@@ -172,6 +196,17 @@ function IntervalTimelineBar({
       );
     }
   }
+  // Hide tooltips on outside click (mobile UX)
+  useEffect(() => {
+    function handleDocClick() {
+      if (showNowTooltip) setShowNowTooltip(false);
+      if (showReminderTooltip) setShowReminderTooltip(false);
+    }
+    if (showNowTooltip || showReminderTooltip) {
+      document.addEventListener('click', handleDocClick);
+      return () => document.removeEventListener('click', handleDocClick);
+    }
+  }, [showNowTooltip, showReminderTooltip, setShowNowTooltip, setShowReminderTooltip]);
   return (
     <div className={homeStyles.timelineBarContainer}>
       {checkedIn ? (

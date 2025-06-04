@@ -79,4 +79,156 @@
   font-size: 1.1rem;
   text-align: center;
   margin-bottom: 8px;
+}
+.calendarContainer {
+  max-width: 420px;
+  margin: 0 auto 24px auto;
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px #eee;
+  padding: 16px;
+}
+.calendarNav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+.calendarNavBtn {
+  background: none;
+  border: none;
+  font-size: 20px;
+  cursor: pointer;
+  color: #2a5bd7;
+}
+.calendarMonthLabel {
+  color: #2a5bd7;
+  font-weight: 600;
+  font-size: 1.1rem;
+  text-align: center;
+}
+.calendarWeekdays {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 2px;
+  text-align: center;
+  font-weight: 500;
+  color: #2a5bd7;
+  margin-bottom: 4px;
+}
+.calendarDays {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 2px;
+}
+.calendarDay {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  padding: 7px 0 4px 0;
+  border-radius: 7px;
+  min-height: 40px;
+  font-weight: 500;
+  box-shadow: none;
+  transition: background 0.12s, border 0.12s;
+  border: 1px solid #eee;
+  background: #fff;
+  color: #222;
+  cursor: default;
+}
+.calendarDayOtherMonth {
+  background: #f5f5f5;
+  color: #bbb;
+  font-weight: 400;
+}
+.calendarDaySelected {
+  background: #e3f0ff;
+  border: 2px solid #2a5bd7;
+  box-shadow: 0 2px 8px #e0eaff;
+}
+.calendarDayHasEvents {
+  cursor: pointer;
+}
+.calendarDayNumber {
+  line-height: 1;
+  font-size: 16px;
+}
+.calendarEventDots {
+  display: flex;
+  flex-direction: row;
+  gap: 4px;
+  margin-top: 6px;
+  align-items: center;
+  justify-content: center;
+  min-height: 16px;
+}
+.calendarEventDot {
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  border: 2px solid #fff;
+  box-shadow: 0 1px 2px #eee;
+}
+.calendarEventDotCheckin { background: #43a047; }
+.calendarEventDotReminder { background: #ff9800; }
+.calendarEventDotMissed { background: #e53935; }
+.calendarEventDotCaregiverEmail { background: #1976d2; }
+.calendarEventDotCaregiverUpdated { background: #8e24aa; }
+.calendarEventDotCaregiverOptin { background: #009688; }
+.calendarEventDotCaregiverOptout { background: #757575; }
+.calendarEventDotUserAlert { background: #e53935; }
+.calendarEventDotDefault { background: #bdbdbd; }
+.calendarEventDotExtra {
+  font-size: 11px;
+  color: #888;
+  margin-left: 2px;
+}
+.selectedDayEventList {
+  margin-top: 10px;
+  background: #f8faff;
+  border-radius: 8px;
+  padding: 10px;
+  box-shadow: 0 1px 4px #e0eaff;
+  border: 1.5px solid #e3f0ff;
+  color: #222;
+}
+.selectedDayEventListTitle {
+  font-weight: 600;
+  color: #2a5bd7;
+  margin-bottom: 4px;
+}
+.selectedDayEventListUl {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.selectedDayEventListItem {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 2px;
+}
+.selectedDayEventListDot {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  border: 2px solid #fff;
+  margin-right: 2px;
+}
+.selectedDayEventListDesc {
+  flex: 1;
+  font-size: 14px;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.selectedDayEventListTime {
+  font-size: 13px;
+  color: #888;
+  margin-left: 6px;
+  min-width: 56px;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
 } 

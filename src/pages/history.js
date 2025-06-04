@@ -11,17 +11,19 @@ function formatEvent(event) {
   const eventTypeDescriptions = {
     caregiver_email_sent: e => `Confirmation email sent to ${e.caregiver_email}`,
     caregiver_updated: e => `Caregiver info updated: ${e.caregiver_name} (${e.caregiver_email}), interval: ${e.interval}h`,
-    caregiver_optin: () => `Caregiver opted in`,
-    caregiver_optout: () => `Caregiver opted out`,
-    checkin: () => "Checked in",
-    missed_checkin: () => "Missed check-in: user did not check in during the interval.",
-    caregiver_alert_email_sent: () => `Alert email sent to caregiver`,
-    reminder_email_sent: () => `Reminder email sent to user`,
-    caregiver_checkin_email_sent: () => `Caregiver notified: user checked in`,
-    user_alert_email_sent: () => `Alert email sent to user`,
+    caregiver_optin: "Caregiver opted in",
+    caregiver_optout: "Caregiver opted out",
+    checkin: "Checked in",
+    missed_checkin: "Missed check-in: user did not check in during the interval.",
+    caregiver_alert_email_sent: "Alert email sent to caregiver",
+    reminder_email_sent: "Reminder email sent to user",
+    caregiver_checkin_email_sent: "Caregiver notified: user checked in",
+    user_alert_email_sent: "Alert email sent to user",
   };
-  const descFn = eventTypeDescriptions[event_type];
-  return descFn ? descFn(event_data || {}) : event_type;
+  const desc = typeof eventTypeDescriptions[event_type] === "function"
+    ? eventTypeDescriptions[event_type](event_data || {})
+    : eventTypeDescriptions[event_type] || event_type;
+  return desc;
 }
 
 function Spinner() {
@@ -86,6 +88,18 @@ export default function History() {
     if (!eventsByDay[d]) eventsByDay[d] = [];
     eventsByDay[d].push(event);
   }
+
+  // Dot class lookup for event types
+  const eventTypeToDotClass = {
+    checkin: historyStyles.calendarEventDotCheckin,
+    reminder: historyStyles.calendarEventDotReminder,
+    missed_checkin_alert: historyStyles.calendarEventDotMissed,
+    caregiver_email_sent: historyStyles.calendarEventDotCaregiverEmail,
+    caregiver_updated: historyStyles.calendarEventDotCaregiverUpdated,
+    caregiver_optin: historyStyles.calendarEventDotCaregiverOptin,
+    caregiver_optout: historyStyles.calendarEventDotCaregiverOptout,
+    user_alert_email_sent: historyStyles.calendarEventDotUserAlert,
+  };
   // --- End calendar logic ---
 
   return (
@@ -95,74 +109,41 @@ export default function History() {
       </div>
       <h1 className={historyStyles.title}>History</h1>
       {/* Calendar View */}
-      <div style={{ maxWidth: 420, margin: '0 auto 24px auto', background: '#fff', borderRadius: 12, boxShadow: '0 2px 8px #eee', padding: 16 }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
-          <button onClick={() => setCalendarMonth(calendarMonth.minus({ months: 1 }))} style={{ background: 'none', border: 'none', fontSize: 20, cursor: 'pointer', color: '#2a5bd7' }}>&lt;</button>
-          <span className={historyStyles.calendarMonth}>{calendarMonth.toFormat('MMMM yyyy')}</span>
-          <button onClick={() => setCalendarMonth(calendarMonth.plus({ months: 1 }))} style={{ background: 'none', border: 'none', fontSize: 20, cursor: 'pointer', color: '#2a5bd7' }}>&gt;</button>
+      <div className={historyStyles.calendarContainer}>
+        <div className={historyStyles.calendarNav}>
+          <button onClick={() => setCalendarMonth(calendarMonth.minus({ months: 1 }))} className={historyStyles.calendarNavBtn}>&lt;</button>
+          <span className={historyStyles.calendarMonthLabel}>{calendarMonth.toFormat('MMMM yyyy')}</span>
+          <button onClick={() => setCalendarMonth(calendarMonth.plus({ months: 1 }))} className={historyStyles.calendarNavBtn}>&gt;</button>
         </div>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 2, textAlign: 'center', fontWeight: 500, color: '#2a5bd7', marginBottom: 4 }}>
+        <div className={historyStyles.calendarWeekdays}>
           {["Sun","Mon","Tue","Wed","Thu","Fri","Sat"].map(d => <div key={d}>{d}</div>)}
         </div>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 2 }}>
+        <div className={historyStyles.calendarDays}>
           {days.map((d, i) => {
             const iso = d.toISODate();
             const isCurrentMonth = d.month === calendarMonth.month;
             const hasEvents = !!eventsByDay[iso];
+            let dayClass = historyStyles.calendarDay;
+            if (!isCurrentMonth) dayClass += ' ' + historyStyles.calendarDayOtherMonth;
+            if (selectedDay === iso) dayClass += ' ' + historyStyles.calendarDaySelected;
+            if (hasEvents) dayClass += ' ' + historyStyles.calendarDayHasEvents;
             return (
               <div
                 key={iso}
                 onClick={() => hasEvents ? setSelectedDay(iso === selectedDay ? null : iso) : null}
-                style={{
-                  display: 'flex',
-                  flexDirection: 'column',
-                  alignItems: 'center',
-                  justifyContent: 'flex-start',
-                  padding: '7px 0 4px 0',
-                  borderRadius: 7,
-                  background: selectedDay === iso ? '#e3f0ff' : isCurrentMonth ? '#fff' : '#f5f5f5',
-                  color: isCurrentMonth ? '#222' : '#bbb',
-                  border: selectedDay === iso ? '2px solid #2a5bd7' : '1px solid #eee',
-                  cursor: hasEvents ? 'pointer' : 'default',
-                  minHeight: 40,
-                  fontWeight: isCurrentMonth ? 500 : 400,
-                  boxShadow: selectedDay === iso ? '0 2px 8px #e0eaff' : 'none',
-                  transition: 'background 0.12s, border 0.12s',
-                }}
+                className={dayClass}
               >
-                <span style={{ lineHeight: 1, fontSize: 16 }}>{d.day}</span>
+                <span className={historyStyles.calendarDayNumber}>{d.day}</span>
                 {hasEvents && (
-                  <span style={{
-                    display: 'flex',
-                    flexDirection: 'row',
-                    gap: 4,
-                    marginTop: 6,
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    minHeight: 16,
-                  }}>
-                    {eventsByDay[iso].slice(0,3).map((ev, idx) => (
-                      <span key={idx} style={{
-                        display: 'inline-block',
-                        width: 12,
-                        height: 12,
-                        borderRadius: '50%',
-                        background:
-                          ev.event_type === 'checkin' ? '#43a047' :
-                          ev.event_type === 'reminder' ? '#ff9800' :
-                          ev.event_type === 'missed_checkin_alert' ? '#e53935' :
-                          ev.event_type === 'caregiver_email_sent' ? '#1976d2' :
-                          ev.event_type === 'caregiver_updated' ? '#8e24aa' :
-                          ev.event_type === 'caregiver_optin' ? '#009688' :
-                          ev.event_type === 'caregiver_optout' ? '#757575' :
-                          ev.event_type === 'user_alert_email_sent' ? '#e53935' :
-                          '#bdbdbd',
-                        border: '2px solid #fff',
-                        marginLeft: idx > 0 ? 0 : 0,
-                        boxShadow: '0 1px 2px #eee',
-                      }} />
-                    ))}
-                    {eventsByDay[iso].length > 3 && <span style={{ fontSize: 11, color: '#888', marginLeft: 2 }}>+{eventsByDay[iso].length - 3}</span>}
+                  <span className={historyStyles.calendarEventDots}>
+                    {eventsByDay[iso].slice(0,3).map((ev, idx) => {
+                      const dotClass = [
+                        historyStyles.calendarEventDot,
+                        eventTypeToDotClass[ev.event_type] || historyStyles.calendarEventDotDefault
+                      ].join(' ');
+                      return <span key={idx} className={dotClass} />;
+                    })}
+                    {eventsByDay[iso].length > 3 && <span className={historyStyles.calendarEventDotExtra}>+{eventsByDay[iso].length - 3}</span>}
                   </span>
                 )}
               </div>
@@ -171,35 +152,24 @@ export default function History() {
         </div>
         {/* Inline event list for selected day */}
         {selectedDay && eventsByDay[selectedDay] && (
-          <div style={{ marginTop: 10, background: '#f8faff', borderRadius: 8, padding: 10, boxShadow: '0 1px 4px #e0eaff', border: '1.5px solid #e3f0ff', color: '#222' }}>
-            <div style={{ fontWeight: 600, color: '#2a5bd7', marginBottom: 4 }}>{DateTime.fromISO(selectedDay).toLocaleString(DateTime.DATE_FULL)}</div>
-            <ul style={{ margin: 0, padding: 0, listStyle: 'none' }}>
-              {eventsByDay[selectedDay].map((event, i) => (
-                <li key={i} style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 2 }}>
-                  <span style={{
-                    display: 'inline-block',
-                    width: 10,
-                    height: 10,
-                    borderRadius: '50%',
-                    background:
-                      event.event_type === 'checkin' ? '#43a047' :
-                      event.event_type === 'reminder' ? '#ff9800' :
-                      event.event_type === 'missed_checkin_alert' ? '#e53935' :
-                      event.event_type === 'caregiver_email_sent' ? '#1976d2' :
-                      event.event_type === 'caregiver_updated' ? '#8e24aa' :
-                      event.event_type === 'caregiver_optin' ? '#009688' :
-                      event.event_type === 'caregiver_optout' ? '#757575' :
-                      event.event_type === 'user_alert_email_sent' ? '#e53935' :
-                      '#bdbdbd',
-                    border: '2px solid #fff',
-                    marginRight: 2,
-                  }} />
-                  <span style={{ flex: 1, fontSize: 14, minWidth: 0, overflowWrap: 'anywhere' }}>{formatEvent(event)}</span>
-                  <span style={{ fontSize: 13, color: '#888', marginLeft: 6, minWidth: 56, textAlign: 'right', fontVariantNumeric: 'tabular-nums' }}>
-                    {DateTime.fromISO(event.created_at).toLocaleString(DateTime.TIME_SIMPLE)}
-                  </span>
-                </li>
-              ))}
+          <div className={historyStyles.selectedDayEventList}>
+            <div className={historyStyles.selectedDayEventListTitle}>{DateTime.fromISO(selectedDay).toLocaleString(DateTime.DATE_FULL)}</div>
+            <ul className={historyStyles.selectedDayEventListUl}>
+              {eventsByDay[selectedDay].map((event, i) => {
+                const dotClass = [
+                  historyStyles.selectedDayEventListDot,
+                  eventTypeToDotClass[event.event_type] || historyStyles.calendarEventDotDefault
+                ].join(' ');
+                return (
+                  <li key={i} className={historyStyles.selectedDayEventListItem}>
+                    <span className={dotClass} />
+                    <span className={historyStyles.selectedDayEventListDesc}>{formatEvent(event)}</span>
+                    <span className={historyStyles.selectedDayEventListTime}>
+                      {DateTime.fromISO(event.created_at).toLocaleString(DateTime.TIME_SIMPLE)}
+                    </span>
+                  </li>
+                );
+              })}
             </ul>
           </div>
         )}
