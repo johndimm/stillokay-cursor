@@ -44,6 +44,9 @@
 .caregiver_optoutBg { background: #fdeaea; }
 .checkinBg { background: #eafaf1; }
 .defaultBg { background: #f6f8fa; }
+.missed_checkinBg, .missed_checkin_alertBg {
+  background: #fdeaea;
+}
 .eventDetails {
   flex: 1;
 }
@@ -87,6 +90,7 @@
   border-radius: 12px;
   box-shadow: 0 2px 8px #eee;
   padding: 16px;
+  overflow: visible;
 }
 .calendarNav {
   display: flex;
@@ -120,6 +124,7 @@
   display: grid;
   grid-template-columns: repeat(7, 1fr);
   gap: 2px;
+  overflow: visible;
 }
 .calendarDay {
   display: flex;
@@ -136,6 +141,7 @@
   background: #fff;
   color: #222;
   cursor: default;
+  position: relative;
 }
 .calendarDayOtherMonth {
   background: #f5f5f5;
@@ -231,4 +237,57 @@
   min-width: 56px;
   text-align: right;
   font-variant-numeric: tabular-nums;
+}
+.calendarDayBar {
+  display: flex;
+  width: 100%;
+  height: 22px;
+  margin-top: 6px;
+  border-radius: 6px;
+  overflow: visible;
+  box-shadow: 0 1px 2px #eee;
+  position: relative;
+}
+.calendarDayBarSegment {
+  flex: 1 1 0;
+  height: 100%;
+  cursor: pointer;
+  transition: filter 0.15s;
+  position: relative;
+}
+.calendarDayBarSegmentGreen {
+  background: #43a047;
+}
+.calendarDayBarSegmentRed {
+  background: #e53935;
+}
+.calendarDayBarSegmentGray {
+  background: #e0e0e0;
+}
+.calendarDayBarTooltip {
+  position: absolute;
+  left: 50%;
+  top: -38px;
+  transform: translateX(-50%);
+  background: #fff;
+  color: #222;
+  border: 1.5px solid #888;
+  border-radius: 7px;
+  padding: 7px 12px;
+  font-size: 13px;
+  font-weight: 500;
+  box-shadow: 0 2px 8px #ddd;
+  white-space: normal;
+  z-index: 10010;
+  text-align: center;
+  line-height: 1.4;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.15s;
+}
+.calendarDayBarSegment:hover .calendarDayBarTooltip,
+.calendarDayBarSegment:focus .calendarDayBarTooltip,
+.calendarDayBarSegment.active .calendarDayBarTooltip {
+  opacity: 1;
+  pointer-events: auto;
 } 

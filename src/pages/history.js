@@ -47,12 +47,45 @@ function Spinner() {
   );
 }
 
+function getSegmentTooltip(seg) {
+  // Group and filter events for tooltip clarity, but only count check-ins within the segment interval
+  const { events, segStart, segEnd } = seg;
+  if (!events || events.length === 0) return seg.tooltip;
+  const eventGroups = {
+    checkin: [],
+    missed: [],
+    info: [],
+    email: [],
+    other: []
+  };
+  events.forEach(ev => {
+    if (ev.event_type === 'checkin') {
+      // Only count check-ins within this segment's interval
+      const t = DateTime.fromISO(ev.created_at).setZone(timezone);
+      if (t >= segStart && t < segEnd) eventGroups.checkin.push(ev);
+    } else if (ev.event_type === 'missed_checkin' || ev.event_type === 'missed_checkin_alert') eventGroups.missed.push(ev);
+    else if (ev.event_type === 'caregiver_updated') eventGroups.info.push(ev);
+    else if (ev.event_type.endsWith('_email_sent')) eventGroups.email.push(ev);
+    else eventGroups.other.push(ev);
+  });
+  const lines = [];
+  if (eventGroups.checkin.length > 0) lines.push('✅ Checked in');
+  if (eventGroups.missed.length > 0 && eventGroups.checkin.length === 0) lines.push('❌ Missed check-in');
+  if (eventGroups.info.length > 0) lines.push('ℹ️ Caregiver info updated');
+  if (eventGroups.email.length > 0) lines.push('📧 Email(s) sent');
+  if (eventGroups.other.length > 0) lines.push('• Other activity');
+  return lines.length > 0 ? lines.join('\n') : seg.tooltip;
+}
+
 export default function History() {
   const { data: session } = useSession();
   const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [calendarMonth, setCalendarMonth] = useState(DateTime.now().startOf('month'));
   const [selectedDay, setSelectedDay] = useState(null);
+  const [interval, setInterval] = useState(24); // default
+  const [timezone, setTimezone] = useState('local');
+  const [barTooltip, setBarTooltip] = useState({ day: null, seg: null });
 
   useEffect(() => {
     async function fetchHistory() {
@@ -61,10 +94,33 @@ export default function History() {
       if (res.ok) {
         const data = await res.json();
         setEvents(data.events.map(e => ({ ...e, event_data: e.event_data || {} })));
+        // Debug: log missed_checkin events for the current month
+        const missed = (data.events || []).filter(ev =>
+          (ev.event_type === 'missed_checkin' || ev.event_type === 'missed_checkin_alert') &&
+          ev.event_data && ev.event_data.interval_end
+        );
+        if (missed.length > 0) {
+          console.log('Missed checkin events:', missed.map(ev => ({
+            created_at: ev.created_at,
+            interval_end: ev.event_data.interval_end,
+            event_type: ev.event_type
+          })));
+        } else {
+          console.log('No missed_checkin events found');
+        }
       }
       setLoading(false);
     }
+    async function fetchInterval() {
+      const res = await fetch('/api/settings');
+      if (res.ok) {
+        const data = await res.json();
+        setInterval(data.interval || 24);
+        setTimezone(data.timezone || DateTime.local().zoneName);
+      }
+    }
     fetchHistory();
+    fetchInterval();
   }, []);
 
   if (!session) return <p>Please sign in to view history.</p>;
@@ -84,22 +140,101 @@ export default function History() {
   // Map events by date string (yyyy-MM-dd)
   const eventsByDay = {};
   for (const event of events) {
-    const d = DateTime.fromISO(event.created_at).toISODate();
+    let d;
+    if ((event.event_type === 'missed_checkin' || event.event_type === 'missed_checkin_alert') && event.event_data && event.event_data.interval_end) {
+      let end = DateTime.fromISO(event.event_data.interval_end).setZone(timezone);
+      // If interval_end is exactly midnight, group under previous day
+      if (end.hour === 0 && end.minute === 0 && end.second === 0 && end.millisecond === 0) {
+        end = end.minus({ days: 1 });
+      }
+      d = end.toISODate();
+    } else {
+      d = DateTime.fromISO(event.created_at).setZone(timezone).toISODate();
+    }
     if (!eventsByDay[d]) eventsByDay[d] = [];
     eventsByDay[d].push(event);
+  }
+  // Debug: log eventsByDay for June
+  if (Object.keys(eventsByDay).length > 0) {
+    console.log('eventsByDay:', Object.fromEntries(Object.entries(eventsByDay).filter(([k]) => k.startsWith('2025-06'))));
   }
 
   // Dot class lookup for event types
   const eventTypeToDotClass = {
     checkin: historyStyles.calendarEventDotCheckin,
     reminder: historyStyles.calendarEventDotReminder,
-    missed_checkin_alert: historyStyles.calendarEventDotMissed,
+    missed_checkin: historyStyles.calendarEventDotMissed,
     caregiver_email_sent: historyStyles.calendarEventDotCaregiverEmail,
     caregiver_updated: historyStyles.calendarEventDotCaregiverUpdated,
     caregiver_optin: historyStyles.calendarEventDotCaregiverOptin,
     caregiver_optout: historyStyles.calendarEventDotCaregiverOptout,
     user_alert_email_sent: historyStyles.calendarEventDotUserAlert,
   };
+
+  // Helper: get interval segments for a day
+  function getDaySegments(day, events, interval) {
+    const userToday = DateTime.now().setZone(timezone).startOf('day');
+    const isPast = day < userToday;
+    const isToday = day.hasSame(userToday, 'day');
+    if (interval >= 24) {
+      // 24h: one segment for the whole day
+      const hasCheckin = events.some(ev => ev.event_type === 'checkin');
+      // Missed: just check if any event is missed_checkin or missed_checkin_alert
+      const hasMissed = events.some(ev => ev.event_type === 'missed_checkin' || ev.event_type === 'missed_checkin_alert');
+      let color = 'gray';
+      if (hasCheckin) color = 'green';
+      else if (hasMissed && isPast) color = 'red';
+      // today or future: never red
+      return [{
+        color,
+        tooltip: hasCheckin ? 'Checked in' : (hasMissed && isPast) ? 'Missed check-in' : 'No data',
+        events: events,
+      }];
+    } else {
+      // Shorter: split day into segments
+      const segments = [];
+      const start = day.startOf('day');
+      for (let i = 0; i < 24 / interval; ++i) {
+        const segStart = start.plus({ hours: i * interval });
+        const segEnd = segStart.plus({ hours: interval });
+        const segEvents = (events || []).filter(ev => {
+          const t = DateTime.fromISO(ev.created_at).setZone(timezone);
+          return t >= segStart && t < segEnd;
+        });
+        // Missed: look for missed_checkin/missed_checkin_alert with interval_end in this segment
+        const segHasMissed = (events || []).some(ev => {
+          if (ev.event_type === 'missed_checkin' || ev.event_type === 'missed_checkin_alert') {
+            const end = ev.event_data && ev.event_data.interval_end;
+            if (end) {
+              const endTime = DateTime.fromISO(end).setZone(timezone);
+              // Inclusive of both boundaries
+              return endTime >= segStart && endTime <= segEnd;
+            }
+          }
+          return false;
+        });
+        const segIsPast = segEnd < DateTime.now().setZone(timezone);
+        const hasCheckin = segEvents.some(ev => ev.event_type === 'checkin');
+        let color = 'gray';
+        if (hasCheckin) color = 'green';
+        else if (segHasMissed && segIsPast) color = 'red';
+        // today/future: never red
+        let tooltip = '';
+        if (hasCheckin) tooltip = 'Checked in';
+        else if (segHasMissed && segIsPast) tooltip = 'Missed check-in';
+        else if (segEvents.length > 0) tooltip = segEvents.map(ev => ev.event_type).join(', ');
+        else tooltip = 'No data';
+        segments.push({
+          color,
+          tooltip,
+          events: segEvents,
+          segStart,
+          segEnd,
+        });
+      }
+      return segments;
+    }
+  }
   // --- End calendar logic ---
 
   return (
@@ -127,25 +262,61 @@ export default function History() {
             if (!isCurrentMonth) dayClass += ' ' + historyStyles.calendarDayOtherMonth;
             if (selectedDay === iso) dayClass += ' ' + historyStyles.calendarDaySelected;
             if (hasEvents) dayClass += ' ' + historyStyles.calendarDayHasEvents;
+            // Bar segments
+            const segments = getDaySegments(d, eventsByDay[iso] || [], interval);
+            // Debug for June 4, 2025
+            if (iso === '2025-06-04') {
+              const events = eventsByDay[iso] || [];
+              const hasCheckin = events.some(ev => ev.event_type === 'checkin');
+              const hasMissed = events.some(ev => ev.event_type === 'missed_checkin' || ev.event_type === 'missed_checkin_alert');
+              const userToday = DateTime.now().setZone(timezone).startOf('day');
+              const isPast = d < userToday;
+              console.log('JUNE 4 FULL EVENTS:', events);
+              console.log('JUNE 4 DEBUG:', {
+                eventTypes: events.map(ev => ev.event_type),
+                hasCheckin,
+                hasMissed,
+                isPast,
+                today: userToday.toISODate(),
+                d: d.toISODate(),
+              });
+            }
             return (
               <div
                 key={iso}
                 onClick={() => hasEvents ? setSelectedDay(iso === selectedDay ? null : iso) : null}
                 className={dayClass}
+                style={{ background: 'none', paddingBottom: 0 }}
               >
                 <span className={historyStyles.calendarDayNumber}>{d.day}</span>
-                {hasEvents && (
-                  <span className={historyStyles.calendarEventDots}>
-                    {eventsByDay[iso].slice(0,3).map((ev, idx) => {
-                      const dotClass = [
-                        historyStyles.calendarEventDot,
-                        eventTypeToDotClass[ev.event_type] || historyStyles.calendarEventDotDefault
-                      ].join(' ');
-                      return <span key={idx} className={dotClass} />;
-                    })}
-                    {eventsByDay[iso].length > 3 && <span className={historyStyles.calendarEventDotExtra}>+{eventsByDay[iso].length - 3}</span>}
-                  </span>
-                )}
+                <div className={historyStyles.calendarDayBar}>
+                  {segments.map((seg, segIdx) => (
+                    <div
+                      key={segIdx}
+                      className={[
+                        historyStyles.calendarDayBarSegment,
+                        seg.color === 'green' ? historyStyles.calendarDayBarSegmentGreen :
+                        seg.color === 'red' ? historyStyles.calendarDayBarSegmentRed :
+                        historyStyles.calendarDayBarSegmentGray,
+                        barTooltip.day === iso && barTooltip.seg === segIdx ? 'active' : ''
+                      ].join(' ')}
+                      onMouseEnter={() => setBarTooltip({ day: iso, seg: segIdx })}
+                      onMouseLeave={() => setBarTooltip({ day: null, seg: null })}
+                      onTouchStart={e => { e.stopPropagation(); setBarTooltip({ day: iso, seg: segIdx }); }}
+                      tabIndex={0}
+                      onFocus={() => setBarTooltip({ day: iso, seg: segIdx })}
+                      onBlur={() => setBarTooltip({ day: null, seg: null })}
+                    >
+                      {(barTooltip.day === iso && barTooltip.seg === segIdx) && (
+                        <div className={historyStyles.calendarDayBarTooltip}>
+                          {getSegmentTooltip(seg).split('\n').map((line, i) => (
+                            <div key={i}>{line}</div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
               </div>
             );
           })}
