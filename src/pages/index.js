@@ -21,7 +21,7 @@ const geistMono = Geist_Mono({
 });
 
 function formatEvent(event) {
-  const { event_type, event_data, created_at } = event;
+  const { event_type, event_data, created_at, feeling_level, note } = event;
   let desc = "";
   if (event_type === "caregiver_email_sent") {
     desc = `Confirmation email sent to ${event_data.caregiver_email}`;
@@ -33,6 +33,12 @@ function formatEvent(event) {
     desc = `Caregiver opted out`;
   } else if (event_type === "checkin") {
     desc = "Checked in";
+    if (feeling_level) {
+      desc += ` (feeling: ${feeling_level}/10)`;
+    }
+    if (note) {
+      desc += ` - "${note}"`;
+    }
   } else if (event_type === "missed_checkin") {
     desc = "Missed check-in: user did not check in during the interval.";
   } else if (event_type === "caregiver_alert_email_sent") {
@@ -260,6 +266,9 @@ export default function Home() {
   const [timelineNow, setTimelineNow] = useState(DateTime.now());
   const [showNowTooltip, setShowNowTooltip] = useState(false);
   const [showReminderTooltip, setShowReminderTooltip] = useState(false);
+  const [feelingLevel, setFeelingLevel] = useState(7);
+  const [note, setNote] = useState("");
+  const [showOptionalFields, setShowOptionalFields] = useState(false);
 
   async function fetchCheckinStatus() {
     const res = await fetch('/api/checkin-status');
@@ -311,10 +320,25 @@ export default function Home() {
   const handleCheckIn = async () => {
     setCheckingIn(true);
     try {
-      const res = await fetch('/api/checkin', { method: 'POST' });
+      const body = {};
+      if (showOptionalFields) {
+        body.feelingLevel = feelingLevel;
+        if (note.trim()) {
+          body.note = note.trim();
+        }
+      }
+      const res = await fetch('/api/checkin', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(body),
+      });
       if (res.ok) {
         await fetchCheckinStatus();
         await fetchHistory();
+        setNote("");
+        setShowOptionalFields(false);
       }
     } finally {
       setCheckingIn(false);
@@ -360,6 +384,105 @@ export default function Home() {
                 <span className={homeStyles.checkInBtnGradient} />
                 <span style={{ position: 'relative', zIndex: 1 }}>Still Okay</span>
               </button>
+              
+              {!checkedIn && (
+                <div style={{ margin: '16px 0', maxWidth: 400, width: '100%' }}>
+                  <button
+                    type="button"
+                    onClick={() => setShowOptionalFields(!showOptionalFields)}
+                    style={{
+                      background: 'none',
+                      border: 'none',
+                      color: '#2a5bd7',
+                      textDecoration: 'underline',
+                      cursor: 'pointer',
+                      fontSize: '14px',
+                      padding: '4px 0',
+                      marginBottom: showOptionalFields ? '12px' : '0'
+                    }}
+                  >
+                    {showOptionalFields ? 'Hide optional details' : 'Add how you\'re feeling (optional)'}
+                  </button>
+                  
+                  {showOptionalFields && (
+                    <div style={{ 
+                      background: '#f8f9fa', 
+                      border: '1px solid #e9ecef',
+                      borderRadius: '8px',
+                      padding: '16px',
+                      marginTop: '8px'
+                    }}>
+                      <div style={{ marginBottom: '16px' }}>
+                        <label style={{ 
+                          display: 'block', 
+                          marginBottom: '8px', 
+                          fontSize: '14px', 
+                          fontWeight: '500',
+                          color: '#333'
+                        }}>
+                          How are you feeling today? ({feelingLevel}/10)
+                        </label>
+                        <input
+                          type="range"
+                          min="1"
+                          max="10"
+                          value={feelingLevel}
+                          onChange={(e) => setFeelingLevel(parseInt(e.target.value))}
+                          style={{
+                            width: '100%',
+                            height: '6px',
+                            borderRadius: '3px',
+                            background: `linear-gradient(to right, #ff4444 0%, #ffaa00 50%, #00aa00 100%)`,
+                            outline: 'none',
+                            cursor: 'pointer'
+                          }}
+                        />
+                        <div style={{
+                          display: 'flex',
+                          justifyContent: 'space-between',
+                          fontSize: '12px',
+                          color: '#666',
+                          marginTop: '4px'
+                        }}>
+                          <span>Not great</span>
+                          <span>Great!</span>
+                        </div>
+                      </div>
+                      
+                      <div>
+                        <label style={{ 
+                          display: 'block', 
+                          marginBottom: '8px', 
+                          fontSize: '14px', 
+                          fontWeight: '500',
+                          color: '#333'
+                        }}>
+                          Note for your caregiver (optional)
+                        </label>
+                        <textarea
+                          value={note}
+                          onChange={(e) => setNote(e.target.value)}
+                          placeholder="Anything you'd like to share..."
+                          style={{
+                            width: '100%',
+                            minHeight: '60px',
+                            padding: '8px 12px',
+                            border: '1px solid #ddd',
+                            borderRadius: '4px',
+                            fontSize: '14px',
+                            resize: 'vertical',
+                            boxSizing: 'border-box'
+                          }}
+                          maxLength={500}
+                        />
+                        <div style={{ fontSize: '12px', color: '#666', textAlign: 'right', marginTop: '4px' }}>
+                          {note.length}/500
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
               {checkedIn && nextIntervalStart && (
                 <div className={homeStyles.checkedInMsg}>
                   {(() => {

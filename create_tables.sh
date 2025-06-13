@@ -25,11 +25,15 @@ CREATE TABLE IF NOT EXISTS history (
   user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
   event_type TEXT NOT NULL,
   event_data JSONB,
+  feeling_level INTEGER CHECK (feeling_level >= 1 AND feeling_level <= 10),
+  note TEXT,
   created_at TIMESTAMPTZ DEFAULT now()
 );
 
 \dt
 
--- Add column if upgrading an existing table
+-- Add columns if upgrading an existing table
 ALTER TABLE caregivers ADD COLUMN IF NOT EXISTS send_checkin_email BOOLEAN DEFAULT FALSE;
+ALTER TABLE history ADD COLUMN IF NOT EXISTS feeling_level INTEGER CHECK (feeling_level >= 1 AND feeling_level <= 10);
+ALTER TABLE history ADD COLUMN IF NOT EXISTS note TEXT;
 EOF
