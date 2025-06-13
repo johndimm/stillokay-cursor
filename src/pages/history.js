@@ -7,7 +7,7 @@ import homeStyles from "@/styles/HomePage.module.css";
 import EventTimeline from "@/components/EventTimeline";
 
 function formatEvent(event) {
-  const { event_type, event_data } = event;
+  const { event_type, event_data, feeling_level, note } = event;
   const eventTypeDescriptions = {
     caregiver_email_sent: e => `Confirmation email sent to ${e.caregiver_email}`,
     caregiver_updated: e => `Caregiver info updated: ${e.caregiver_name} (${e.caregiver_email}), interval: ${e.interval}h`,
@@ -20,9 +20,20 @@ function formatEvent(event) {
     caregiver_checkin_email_sent: "Caregiver notified: user checked in",
     user_alert_email_sent: "Alert email sent to user",
   };
-  const desc = typeof eventTypeDescriptions[event_type] === "function"
+  let desc = typeof eventTypeDescriptions[event_type] === "function"
     ? eventTypeDescriptions[event_type](event_data || {})
     : eventTypeDescriptions[event_type] || event_type;
+  
+  // Add feeling level and note for check-in events
+  if (event_type === "checkin") {
+    if (feeling_level) {
+      desc += ` (feeling: ${feeling_level}/10)`;
+    }
+    if (note) {
+      desc += ` - "${note}"`;
+    }
+  }
+  
   return desc;
 }
 
@@ -178,16 +189,34 @@ export default function History() {
     const isToday = day.hasSame(userToday, 'day');
     if (interval >= 24) {
       // 24h: one segment for the whole day
-      const hasCheckin = events.some(ev => ev.event_type === 'checkin');
+      const checkinEvent = events.find(ev => ev.event_type === 'checkin');
+      const hasCheckin = !!checkinEvent;
       // Missed: just check if any event is missed_checkin or missed_checkin_alert
       const hasMissed = events.some(ev => ev.event_type === 'missed_checkin' || ev.event_type === 'missed_checkin_alert');
       let color = 'gray';
-      if (hasCheckin) color = 'green';
-      else if (hasMissed && isPast) color = 'red';
+      if (hasCheckin) {
+        // Use feeling level to determine shade of green
+        const feelingLevel = checkinEvent.feeling_level;
+        if (feelingLevel) {
+          // Map 1-10 to light to dark green
+          if (feelingLevel <= 3) color = 'green-light';
+          else if (feelingLevel <= 6) color = 'green-medium';
+          else color = 'green-dark';
+        } else {
+          color = 'green'; // default green for no feeling level
+        }
+      } else if (hasMissed && isPast) color = 'red';
       // today or future: never red
+      let tooltip = hasCheckin ? 'Checked in' : (hasMissed && isPast) ? 'Missed check-in' : 'No data';
+      if (hasCheckin && checkinEvent.feeling_level) {
+        tooltip += ` (feeling: ${checkinEvent.feeling_level}/10)`;
+      }
+      if (hasCheckin && checkinEvent.note) {
+        tooltip += `\nNote: ${checkinEvent.note}`;
+      }
       return [{
         color,
-        tooltip: hasCheckin ? 'Checked in' : (hasMissed && isPast) ? 'Missed check-in' : 'No data',
+        tooltip,
         events: events,
       }];
     } else {
@@ -214,14 +243,32 @@ export default function History() {
           return false;
         });
         const segIsPast = segEnd < DateTime.now().setZone(timezone);
-        const hasCheckin = segEvents.some(ev => ev.event_type === 'checkin');
+        const checkinEvent = segEvents.find(ev => ev.event_type === 'checkin');
+        const hasCheckin = !!checkinEvent;
         let color = 'gray';
-        if (hasCheckin) color = 'green';
-        else if (segHasMissed && segIsPast) color = 'red';
+        if (hasCheckin) {
+          // Use feeling level to determine shade of green
+          const feelingLevel = checkinEvent.feeling_level;
+          if (feelingLevel) {
+            // Map 1-10 to light to dark green
+            if (feelingLevel <= 3) color = 'green-light';
+            else if (feelingLevel <= 6) color = 'green-medium';
+            else color = 'green-dark';
+          } else {
+            color = 'green'; // default green for no feeling level
+          }
+        } else if (segHasMissed && segIsPast) color = 'red';
         // today/future: never red
         let tooltip = '';
-        if (hasCheckin) tooltip = 'Checked in';
-        else if (segHasMissed && segIsPast) tooltip = 'Missed check-in';
+        if (hasCheckin) {
+          tooltip = 'Checked in';
+          if (checkinEvent.feeling_level) {
+            tooltip += ` (feeling: ${checkinEvent.feeling_level}/10)`;
+          }
+          if (checkinEvent.note) {
+            tooltip += `\nNote: ${checkinEvent.note}`;
+          }
+        } else if (segHasMissed && segIsPast) tooltip = 'Missed check-in';
         else if (segEvents.length > 0) tooltip = segEvents.map(ev => ev.event_type).join(', ');
         else tooltip = 'No data';
         segments.push({
@@ -296,6 +343,9 @@ export default function History() {
                       className={[
                         historyStyles.calendarDayBarSegment,
                         seg.color === 'green' ? historyStyles.calendarDayBarSegmentGreen :
+                        seg.color === 'green-light' ? historyStyles.calendarDayBarSegmentGreenLight :
+                        seg.color === 'green-medium' ? historyStyles.calendarDayBarSegmentGreenMedium :
+                        seg.color === 'green-dark' ? historyStyles.calendarDayBarSegmentGreenDark :
                         seg.color === 'red' ? historyStyles.calendarDayBarSegmentRed :
                         historyStyles.calendarDayBarSegmentGray,
                         barTooltip.day === iso && barTooltip.seg === segIdx ? 'active' : ''

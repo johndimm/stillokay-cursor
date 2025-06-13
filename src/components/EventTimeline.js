@@ -27,7 +27,13 @@ export default function EventTimeline({ events, limit, formatEvent, className })
               marginRight: 8,
               background:
                 event.event_type === "checkin"
-                  ? "#43a047"
+                  ? event.feeling_level <= 3
+                    ? "#a5d6a7"  // light green
+                    : event.feeling_level <= 6
+                    ? "#66bb6a"  // medium green  
+                    : event.feeling_level > 6
+                    ? "#2e7d32"  // dark green
+                    : "#43a047"  // default green for no feeling level
                   : event.event_type === "reminder"
                   ? "#ff9800"
                   : event.event_type === "missed_checkin_alert"

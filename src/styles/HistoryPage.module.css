@@ -258,6 +258,15 @@
 .calendarDayBarSegmentGreen {
   background: #43a047;
 }
+.calendarDayBarSegmentGreenLight {
+  background: #a5d6a7;
+}
+.calendarDayBarSegmentGreenMedium {
+  background: #66bb6a;
+}
+.calendarDayBarSegmentGreenDark {
+  background: #2e7d32;
+}
 .calendarDayBarSegmentRed {
   background: #e53935;
 }
